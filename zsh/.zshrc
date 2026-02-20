@@ -37,5 +37,6 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # --- Aliases ---
 alias clauded='claude --dangerously-skip-permissions'
+alias vim='vimx'
 # opencode
 export PATH=/home/sirhamy/.opencode/bin:$PATH
