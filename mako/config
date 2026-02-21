@@ -1,0 +1,19 @@
+font=Sans 12
+background-color=#161616
+text-color=#bcc2cc
+border-color=#10b981
+border-radius=6
+border-size=2
+padding=12
+margin=8
+width=350
+max-visible=3
+default-timeout=5000
+group-by=app-name
+
+[urgency=low]
+border-color=#5e6570
+
+[urgency=critical]
+border-color=#e06c75
+default-timeout=0
