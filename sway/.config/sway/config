@@ -45,6 +45,8 @@ input type:touchpad {
     middle_emulation enabled
 }
 
+input * xkb_options caps:escape_shifted_capslock
+
 ### Key bindings
 
 # Basics
@@ -148,6 +150,10 @@ bindsym $mod+r mode "resize"
 
 # Lock screen
     bindsym $mod+Escape exec swaylock -f -c 1a1a2e
+
+# Zellij sessionizer
+    bindsym $mod+p exec ghostty --app-id=floating-launcher -e zellij-sessionizer
+    for_window [app_id="floating-launcher"] floating enable, resize set 800 500, move position center
 
 ### Autostart
 exec waybar

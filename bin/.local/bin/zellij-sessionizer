@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# zellij-sessionizer — fuzzy-pick a project from ~/Code/ and jump into a zellij session
+
+# Bail if already inside zellij
+if [[ -n "$ZELLIJ" ]]; then
+    echo "Already inside a zellij session." >&2
+    exit 1
+fi
+
+# Get existing zellij sessions
+active_sessions=$(zellij list-sessions --short 2>/dev/null)
+
+# Build the project list, marking active sessions with *
+project_list=""
+for dir in "$HOME"/Code/*/; do
+    [[ -d "$dir" ]] || continue
+    name=$(basename "$dir")
+    if echo "$active_sessions" | grep -qx "$name"; then
+        project_list+="* $name"$'\n'
+    else
+        project_list+="  $name"$'\n'
+    fi
+done
+
+# Pipe to fzf for selection
+selected=$(echo -n "$project_list" | fzf --reverse --prompt="project > ")
+
+# Exit cleanly if nothing selected
+[[ -z "$selected" ]] && exit 0
+
+# Strip the leading marker and whitespace
+name=$(echo "$selected" | sed 's/^[* ] *//')
+
+cd "$HOME/Code/$name" || exit 1
+exec zellij attach "$name" -c
