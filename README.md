@@ -8,7 +8,11 @@ Public configuration files for my development environment, managed with [GNU Sto
 
 Each top-level directory is a stow "package". Stow symlinks its contents into `~`, so a file at `sway/.config/sway/config` becomes `~/.config/sway/config`. When adding new configs, mirror the target path inside the package directory.
 
+Packages are split into **common** (linked on all platforms) and **Linux-only** (linked only on Linux). The justfile detects the OS automatically.
+
 ## Packages
+
+### Common (Linux + macOS)
 
 | Package | What it configures |
 |---------|-------------------|
@@ -17,22 +21,50 @@ Each top-level directory is a stow "package". Stow symlinks its contents into `~
 | `git` | Git user config |
 | `bash` | Bash shell config |
 | `ghostty` | Ghostty terminal theme and settings |
+| `zellij` | Zellij terminal multiplexer config and keybindings |
+| `bin` | Custom scripts (`~/.local/bin`) |
+
+### Linux only
+
+| Package | What it configures |
+|---------|-------------------|
 | `sway` | Sway window manager |
+| `swaylock` | Lock screen appearance |
 | `waybar` | Waybar status bar |
 | `mako` | Mako notification daemon |
-| `environment.d` | Systemd environment variables (e.g. Electron Wayland) |
-| `zellij` | Zellij terminal multiplexer config and keybindings |
+| `environment.d` | Systemd environment variables (e.g. Electron Wayland, PATH) |
+
+## Dependencies
+
+### Installed by `just setup`
+
+**Fedora:**
+`stow` `zsh` `zoxide` `fzf` `zellij` `tmux` `sway` `swaylock` `swayidle` `waybar` `mako` `wofi` `grim` `slurp` `wl-clipboard` `brightnessctl` `playerctl` `zsh-autosuggestions` `zsh-syntax-highlighting`
+
+**macOS:**
+`stow` `zsh` `zoxide` `fzf` `ghostty` `zellij` `tmux`
+
+### Manual install required
+
+| Package | Notes |
+|---------|-------|
+| `just` | Task runner. Install first: `dnf install just` / `brew install just` |
+| `ghostty` (Fedora) | Not in default repos. Install from [ghostty.org](https://ghostty.org) or a COPR |
+| `cargo` / Rust toolchain | For tools installed via cargo. Install from [rustup.rs](https://rustup.rs) |
 
 ## Usage
 
-### Prerequisites
+### Fresh machine setup
 
 ```sh
-# Fedora
-sudo dnf install -y stow just
+# Install prerequisites
+sudo dnf install -y stow just   # Fedora
+brew install stow just           # macOS
 
-# macOS
-brew install stow just
+# Clone and set up
+git clone git@github.com:SIRHAMY/dotfiles.git ~/Code/dotfiles
+cd ~/Code/dotfiles
+just setup
 ```
 
 ### Link everything
@@ -63,4 +95,10 @@ just unstow-all
 
 ```sh
 just plan
+```
+
+### Reload running apps (Linux)
+
+```sh
+just reload
 ```

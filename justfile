@@ -1,4 +1,9 @@
-packages := "zsh tmux git bash ghostty sway swaylock waybar mako environment.d zellij bin"
+os := `uname -s`
+
+packages_common := "zsh tmux git bash ghostty zellij bin"
+packages_linux  := "sway swaylock waybar mako environment.d"
+
+packages := if os == "Darwin" { packages_common } else { packages_common + " " + packages_linux }
 
 # Link all packages
 all:
@@ -34,17 +39,35 @@ plan:
 
 # Setup on a fresh machine (install deps + link everything)
 setup:
-    @echo "Installing dependencies..."
-    @command -v stow >/dev/null || (echo "Installing stow..." && sudo dnf install -y stow)
-    @command -v zsh >/dev/null || (echo "Installing zsh..." && sudo dnf install -y zsh)
-    @command -v zoxide >/dev/null || (echo "Installing zoxide..." && sudo dnf install -y zoxide)
+    @echo "Setting up for {{os}}..."
+    @just install-deps
     @just all
-    @just reload
+
+# Install dependencies for the current OS
+[private]
+install-deps:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{os}}" == "Darwin" ]]; then
+        command -v brew >/dev/null || { echo "Homebrew not found. Install from https://brew.sh"; exit 1; }
+        deps=(stow zsh zoxide fzf ghostty zellij tmux)
+        echo "Installing with brew: ${deps[*]}"
+        brew install "${deps[@]}"
+    else
+        deps=(stow zsh zoxide fzf zellij tmux sway swaylock swayidle waybar mako wofi \
+              grim slurp wl-clipboard brightnessctl playerctl \
+              zsh-autosuggestions zsh-syntax-highlighting)
+        echo "Installing with dnf: ${deps[*]}"
+        sudo dnf install -y "${deps[@]}"
+    fi
 
 # Reload running apps to pick up config changes
 reload:
-    @echo "Reloading apps..."
-    @pgrep waybar >/dev/null && killall -SIGUSR2 waybar && echo "Reloaded waybar" || true
-    @pgrep mako >/dev/null && makoctl reload && echo "Reloaded mako" || true
-    @pgrep sway >/dev/null && swaymsg reload >/dev/null && echo "Reloaded sway" || true
-    @echo "Done!"
+    #!/usr/bin/env bash
+    echo "Reloading apps..."
+    if [[ "{{os}}" == "Linux" ]]; then
+        pgrep waybar >/dev/null && killall -SIGUSR2 waybar && echo "Reloaded waybar" || true
+        pgrep mako >/dev/null && makoctl reload && echo "Reloaded mako" || true
+        pgrep sway >/dev/null && swaymsg reload >/dev/null && echo "Reloaded sway" || true
+    fi
+    echo "Done!"
