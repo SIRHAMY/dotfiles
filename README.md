@@ -21,6 +21,7 @@ Each top-level directory is a stow "package". Stow symlinks its contents into `~
 | `waybar` | Waybar status bar |
 | `mako` | Mako notification daemon |
 | `environment.d` | Systemd environment variables (e.g. Electron Wayland) |
+| `zellij` | Zellij terminal multiplexer config and keybindings |
 
 ## Usage
 
