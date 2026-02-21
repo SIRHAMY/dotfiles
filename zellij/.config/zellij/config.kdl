@@ -38,6 +38,30 @@ themes {
             emphasis_2 30 30 30
             emphasis_3 30 30 30
         }
+        ribbon_selected {
+            base 22 22 22
+            background 16 185 129
+            emphasis_0 22 22 22
+            emphasis_1 22 22 22
+            emphasis_2 22 22 22
+            emphasis_3 22 22 22
+        }
+        frame_selected {
+            base 16 185 129
+            background 22 22 22
+            emphasis_0 16 185 129
+            emphasis_1 16 185 129
+            emphasis_2 16 185 129
+            emphasis_3 16 185 129
+        }
+        frame_highlight {
+            base 16 185 129
+            background 22 22 22
+            emphasis_0 16 185 129
+            emphasis_1 16 185 129
+            emphasis_2 16 185 129
+            emphasis_3 16 185 129
+        }
     }
 }
 
