@@ -22,7 +22,7 @@ Packages are split into **common** (linked on all platforms) and **Linux-only** 
 | `bash` | Bash shell config |
 | `ghostty` | Ghostty terminal theme and settings |
 | `zellij` | Zellij terminal multiplexer config and keybindings |
-| `bin` | Custom scripts (`~/.local/bin`) |
+| `bin` | Custom scripts (`~/.local/bin`) — includes zellij-sessionizer |
 
 ### Linux only
 
@@ -102,3 +102,9 @@ just plan
 ```sh
 just reload
 ```
+
+## Zellij Sessionizer
+
+`Super+P` opens a floating fzf picker listing every directory under `~/Code/`. Active zellij sessions are marked with `*`. Select a project to open a new Ghostty terminal attached to that project's zellij session (creating the session if it doesn't exist).
+
+**Requires:** `fzf`, `zellij`, `ghostty`, `sway`

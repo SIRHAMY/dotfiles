@@ -152,7 +152,7 @@ bindsym $mod+r mode "resize"
     bindsym $mod+Escape exec swaylock
 
 # Zellij sessionizer
-    bindsym $mod+p exec ghostty --app-id=floating-launcher -e ~/.local/bin/zellij-sessionizer
+    bindsym $mod+p exec ghostty --class=floating-launcher -e ~/.local/bin/zellij-sessionizer
     for_window [app_id="floating-launcher"] floating enable, resize set 800 500, move position center
 
 ### Autostart
