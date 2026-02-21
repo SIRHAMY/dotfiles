@@ -14,13 +14,13 @@ set $menu wofi --show drun --allow-images
 font pango:Sans 11
 
 # Window borders
-default_border pixel 2
-default_floating_border pixel 2
+default_border pixel 1
+default_floating_border pixel 1
 gaps inner 4
 gaps outer 2
 
 # Window colors          border  background text    indicator child_border
-client.focused           #10b981 #161616    #bcc2cc #10b981   #10b981
+client.focused           #bcc2cc #161616    #bcc2cc #bcc2cc   #bcc2cc
 client.focused_inactive  #1e2127 #161616    #5e6570 #1e2127   #1e2127
 client.unfocused         #161616 #161616    #5e6570 #161616   #161616
 client.urgent            #e06c75 #161616    #bcc2cc #e06c75   #e06c75
@@ -28,7 +28,7 @@ client.urgent            #e06c75 #161616    #bcc2cc #e06c75   #e06c75
 ### Output configuration
 # HiDPI scaling for 2560x1600 laptop display
 output eDP-1 scale 1.5
-output * bg /usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png fill
+output * bg ~/.config/sway/wallpaper.png fill
 
 ### Idle configuration
 exec swayidle -w \
