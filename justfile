@@ -7,6 +7,7 @@ all:
         stow -t ~ $pkg; \
     done
     @echo "Done! All packages linked."
+    @just reload
 
 # Link a single package
 stow package:
@@ -38,3 +39,12 @@ setup:
     @command -v zsh >/dev/null || (echo "Installing zsh..." && sudo dnf install -y zsh)
     @command -v zoxide >/dev/null || (echo "Installing zoxide..." && sudo dnf install -y zoxide)
     @just all
+    @just reload
+
+# Reload running apps to pick up config changes
+reload:
+    @echo "Reloading apps..."
+    @pgrep waybar >/dev/null && killall -SIGUSR2 waybar && echo "Reloaded waybar" || true
+    @pgrep mako >/dev/null && makoctl reload && echo "Reloaded mako" || true
+    @pgrep sway >/dev/null && swaymsg reload >/dev/null && echo "Reloaded sway" || true
+    @echo "Done!"
