@@ -2,9 +2,6 @@
 // Press Ctrl+g to unlock and access zellij bindings.
 default_mode "locked"
 
-// Use the single-line compact bar instead of the default two-bar layout
-default_layout "compact"
-
 // Wayland clipboard integration (sway)
 copy_command "wl-copy"
 
@@ -16,6 +13,25 @@ on_force_close "detach"
 
 // Save pane contents when serializing sessions for resurrection
 serialize_pane_viewport true
+
+// Use terminal-garden theme to match ghostty
+theme "terminal-garden"
+
+themes {
+    terminal-garden {
+        fg "#bcc2cc"
+        bg "#161616"
+        black "#1e2127"
+        red "#e06c75"
+        green "#10b981"
+        yellow "#d19a66"
+        blue "#61afef"
+        magenta "#c678dd"
+        cyan "#56b6c2"
+        white "#bcc2cc"
+        orange "#d19a66"
+    }
+}
 
 keybinds clear-defaults=true {
     locked {
