@@ -150,7 +150,7 @@ bindsym $mod+r mode "resize"
     bindsym $mod+Escape exec swaylock -f -c 1a1a2e
 
 ### Autostart
-exec_always killall waybar; waybar
-exec_always killall mako; mako
+exec waybar
+exec mako
 
 include /etc/sway/config.d/*
