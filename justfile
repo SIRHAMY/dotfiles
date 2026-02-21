@@ -1,4 +1,4 @@
-packages := "zsh tmux git bash ghostty"
+packages := "zsh tmux git bash ghostty sway waybar mako environment.d"
 
 # Link all packages
 all:

@@ -4,6 +4,10 @@ Public configuration files for my development environment, managed with [GNU Sto
 
 **This repo is for public configs only.** No secrets, API keys, or private tooling.
 
+## How it works
+
+Each top-level directory is a stow "package". Stow symlinks its contents into `~`, so a file at `sway/.config/sway/config` becomes `~/.config/sway/config`. When adding new configs, mirror the target path inside the package directory.
+
 ## Packages
 
 | Package | What it configures |
@@ -13,6 +17,10 @@ Public configuration files for my development environment, managed with [GNU Sto
 | `git` | Git user config |
 | `bash` | Bash shell config |
 | `ghostty` | Ghostty terminal theme and settings |
+| `sway` | Sway window manager |
+| `waybar` | Waybar status bar |
+| `mako` | Mako notification daemon |
+| `environment.d` | Systemd environment variables (e.g. Electron Wayland) |
 
 ## Usage
 
