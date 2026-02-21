@@ -49,3 +49,4 @@
 # resize-overlay-duration = 4s 200ms
 
 theme = terminal-garden
+window-theme = ghostty
