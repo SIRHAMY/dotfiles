@@ -32,10 +32,10 @@ output * bg ~/.config/sway/wallpaper.png fill
 
 ### Idle configuration
 exec swayidle -w \
-    timeout 300 'swaylock -f -c 1a1a2e' \
+    timeout 300 'swaylock' \
     timeout 600 'swaymsg "output * power off"' \
         resume 'swaymsg "output * power on"' \
-    before-sleep 'swaylock -f -c 1a1a2e'
+    before-sleep 'swaylock'
 
 ### Input configuration
 input type:touchpad {
@@ -149,7 +149,7 @@ bindsym $mod+r mode "resize"
     bindsym $mod+Shift+Print exec grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
 
 # Lock screen
-    bindsym $mod+Escape exec swaylock -f -c 1a1a2e
+    bindsym $mod+Escape exec swaylock
 
 # Zellij sessionizer
     bindsym $mod+p exec ghostty --app-id=floating-launcher -e zellij-sessionizer

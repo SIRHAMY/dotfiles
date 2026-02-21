@@ -1,0 +1,37 @@
+ignore-empty-password
+show-failed-attempts
+daemonize
+
+image=~/.config/sway/wallpaper.png
+scaling=fill
+color=161616
+
+# Indicator
+indicator-radius=80
+indicator-thickness=8
+line-uses-inside
+
+# Default state
+inside-color=1e2127
+ring-color=5e6570
+text-color=bcc2cc
+separator-color=161616
+
+# Typing
+key-hl-color=10b981
+bs-hl-color=d19a66
+
+# Verifying
+inside-ver-color=1e2127
+ring-ver-color=10b981
+text-ver-color=10b981
+
+# Wrong password
+inside-wrong-color=1e2127
+ring-wrong-color=e06c75
+text-wrong-color=e06c75
+
+# Cleared
+inside-clear-color=1e2127
+ring-clear-color=d19a66
+text-clear-color=d19a66
