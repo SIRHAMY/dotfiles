@@ -54,12 +54,34 @@ install-deps:
         echo "Installing with brew: ${deps[*]}"
         brew install "${deps[@]}"
     else
-        deps=(stow zsh zoxide fzf zellij tmux sway swaylock swayidle waybar mako wofi \
+        deps=(stow zsh zoxide fzf tmux sway swaylock swayidle waybar mako wofi \
               grim slurp wl-clipboard brightnessctl playerctl \
               zsh-autosuggestions zsh-syntax-highlighting)
         echo "Installing with dnf: ${deps[*]}"
         sudo dnf install -y "${deps[@]}"
+        just install-zellij
     fi
+
+# Install zellij from prebuilt binary
+[private]
+install-zellij:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v zellij >/dev/null; then
+        echo "zellij already installed, skipping."
+        exit 0
+    fi
+    echo "Installing zellij from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    arch=$(uname -m)
+    url="https://github.com/zellij-org/zellij/releases/latest/download/zellij-${arch}-unknown-linux-musl.tar.gz"
+    echo "Downloading $url"
+    curl -fsSL "$url" | tar -xz -C "$tmpdir"
+    install -m 755 "$tmpdir/zellij" "$local_bin/zellij"
+    echo "zellij installed to $local_bin/zellij"
 
 # Reload running apps to pick up config changes
 reload:
