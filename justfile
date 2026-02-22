@@ -42,6 +42,7 @@ setup:
     @echo "Setting up for {{os}}..."
     @just install-deps
     @just all
+    @if [ "{{os}}" = "Linux" ]; then just setup-sway-session; fi
 
 # Install dependencies for the current OS
 [private]
@@ -82,6 +83,52 @@ install-zellij:
     curl -fsSL "$url" | tar -xz -C "$tmpdir"
     install -m 755 "$tmpdir/zellij" "$local_bin/zellij"
     echo "zellij installed to $local_bin/zellij"
+
+# Install sway session entry (auto-detects NVIDIA at login time)
+setup-sway-session:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Install sway-launch to a system-wide path so the display manager can find it
+    sudo install -m 755 bin/.local/bin/sway-launch /usr/local/bin/sway-launch
+    echo "Installed /usr/local/bin/sway-launch"
+
+    # Add a login session entry that uses sway-launch
+    sudo tee /usr/share/wayland-sessions/sway-custom.desktop > /dev/null <<'DESKTOP'
+[Desktop Entry]
+Name=Sway (Custom)
+Comment=Sway via sway-launch (auto-detects NVIDIA)
+Exec=/usr/local/bin/sway-launch
+Type=Application
+DesktopNames=sway;wlroots
+DESKTOP
+    echo "Installed /usr/share/wayland-sessions/sway-custom.desktop"
+
+    # Remove the old nvidia-only session entry if present
+    if [[ -f /usr/share/wayland-sessions/sway-nvidia.desktop ]]; then
+        sudo rm /usr/share/wayland-sessions/sway-nvidia.desktop
+        echo "Removed old sway-nvidia.desktop"
+    fi
+
+    # NVIDIA-specific kernel configuration
+    if lspci | grep -qi nvidia; then
+        echo "NVIDIA GPU detected. Installing kernel compatibility..."
+
+        # Enable DRM kernel modesetting (required for Wayland)
+        echo 'options nvidia_drm modeset=1 fbdev=1' | sudo tee /etc/modprobe.d/nvidia-drm.conf
+        echo "Installed /etc/modprobe.d/nvidia-drm.conf"
+
+        # Add nvidia_drm.modeset=1 to kernel cmdline if not already present
+        if ! grep -q 'nvidia_drm.modeset=1' /etc/default/grub; then
+            sudo sed -i 's/GRUB_CMDLINE_LINUX="\(.*\)"/GRUB_CMDLINE_LINUX="\1 nvidia_drm.modeset=1 nvidia_drm.fbdev=1"/' /etc/default/grub
+            sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+            echo "Updated GRUB cmdline. A reboot is required for kernel params to take effect."
+        else
+            echo "GRUB cmdline already has nvidia_drm.modeset=1"
+        fi
+    else
+        echo "No NVIDIA GPU detected, skipping kernel config."
+    fi
 
 # Reload running apps to pick up config changes
 reload:

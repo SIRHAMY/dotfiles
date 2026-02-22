@@ -1,0 +1,11 @@
+#!/bin/sh
+# Portable sway launcher — detects NVIDIA and sets required env vars
+
+if lspci | grep -qi nvidia; then
+    export WLR_NO_HARDWARE_CURSORS=1
+    export GBM_BACKEND=nvidia-drm
+    export __GLX_VENDOR_LIBRARY_NAME=nvidia
+    exec sway --unsupported-gpu "$@"
+else
+    exec sway "$@"
+fi
