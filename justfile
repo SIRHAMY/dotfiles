@@ -94,14 +94,14 @@ setup-sway-session:
     echo "Installed /usr/local/bin/sway-launch"
 
     # Add a login session entry that uses sway-launch
-    sudo tee /usr/share/wayland-sessions/sway-custom.desktop > /dev/null <<'DESKTOP'
-[Desktop Entry]
-Name=Sway (Custom)
-Comment=Sway via sway-launch (auto-detects NVIDIA)
-Exec=/usr/local/bin/sway-launch
-Type=Application
-DesktopNames=sway;wlroots
-DESKTOP
+    printf '%s\n' \
+        '[Desktop Entry]' \
+        'Name=Sway (Custom)' \
+        'Comment=Sway via sway-launch (auto-detects NVIDIA)' \
+        'Exec=/usr/local/bin/sway-launch' \
+        'Type=Application' \
+        'DesktopNames=sway;wlroots' \
+        | sudo tee /usr/share/wayland-sessions/sway-custom.desktop > /dev/null
     echo "Installed /usr/share/wayland-sessions/sway-custom.desktop"
 
     # Remove the old nvidia-only session entry if present
