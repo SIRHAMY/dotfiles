@@ -28,6 +28,13 @@ client.urgent            #e06c75 #161616    #bcc2cc #e06c75   #e06c75
 ### Output configuration
 # HiDPI scaling for 2560x1600 laptop display
 output eDP-1 scale 1.5
+
+# Left monitor - vertical (rotated 90° clockwise)
+output DP-2 resolution 2560x1440 position 0,0 transform 270
+
+# Right monitor - landscape, centered against vertical
+output DP-1 resolution 2560x1440 position 1440,560
+
 output * bg ~/.config/sway/wallpaper.png fill
 
 ### Idle configuration
