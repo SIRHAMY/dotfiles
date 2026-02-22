@@ -83,6 +83,11 @@ input * xkb_options caps:escape_shifted_capslock
     bindsym $mod+Shift+Up move up
     bindsym $mod+Shift+Right move right
 
+    bindsym $mod+Control+$left move workspace to output left
+    bindsym $mod+Control+$right move workspace to output right
+    bindsym $mod+Control+Left move workspace to output left
+    bindsym $mod+Control+Right move workspace to output right
+
 # Workspaces
     bindsym $mod+1 workspace number 1
     bindsym $mod+2 workspace number 2
@@ -116,6 +121,9 @@ input * xkb_options caps:escape_shifted_capslock
     bindsym $mod+Shift+space floating toggle
     bindsym $mod+space focus mode_toggle
     bindsym $mod+a focus parent
+
+# Rename workspace (keeps number prefix)
+    bindsym $mod+n exec ~/.config/sway/rename-workspace.sh
 
 # Scratchpad
     bindsym $mod+Shift+minus move scratchpad
