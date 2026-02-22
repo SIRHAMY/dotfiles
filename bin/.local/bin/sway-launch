@@ -2,7 +2,7 @@
 # Portable sway launcher — detects NVIDIA and adds --unsupported-gpu
 # Uses full paths because display managers (SDDM) have minimal PATHs.
 
-if /usr/bin/lspci | grep -qi nvidia; then
+if /usr/bin/lspci | /usr/bin/grep -qi nvidia; then
     exec /usr/bin/sway --unsupported-gpu "$@"
 else
     exec /usr/bin/sway "$@"
