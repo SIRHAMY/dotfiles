@@ -70,6 +70,12 @@ keybinds clear-defaults=true {
         bind "Ctrl g" { SwitchToMode "normal"; }
         bind "Alt h" { MoveFocusOrTab "left"; }
         bind "Alt l" { MoveFocusOrTab "right"; }
+        bind "Alt j" { MoveFocus "down"; }
+        bind "Alt k" { MoveFocus "up"; }
+        bind "Alt left" { MoveFocusOrTab "left"; }
+        bind "Alt right" { MoveFocusOrTab "right"; }
+        bind "Alt down" { MoveFocus "down"; }
+        bind "Alt up" { MoveFocus "up"; }
         bind "Alt 1" { GoToTab 1; }
         bind "Alt 2" { GoToTab 2; }
         bind "Alt 3" { GoToTab 3; }
