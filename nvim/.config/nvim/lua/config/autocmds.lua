@@ -7,6 +7,15 @@
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
+-- Enable word wrap for markdown
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("markdown_wrap", { clear = true }),
+  pattern = { "markdown" },
+  callback = function()
+    vim.opt_local.wrap = true
+  end,
+})
+
 -- Auto-save when leaving insert mode or when text changes
 vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
   group = vim.api.nvim_create_augroup("auto_save", { clear = true }),
