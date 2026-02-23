@@ -55,6 +55,8 @@ install-deps:
         echo "Installing with brew: ${deps[*]}"
         brew install "${deps[@]}"
     else
+        # Enable COPR repos for packages not in default Fedora repos
+        sudo dnf copr enable atim/lazygit -y
         deps=(stow zsh zoxide fzf tmux neovim fd-find lazygit sway swaylock swayidle waybar mako wofi \
               grim slurp wl-clipboard brightnessctl playerctl \
               zsh-autosuggestions zsh-syntax-highlighting)
