@@ -4,3 +4,4 @@
 
 vim.opt.spell = false
 vim.opt.scrolloff = 10
+vim.opt.conceallevel = 0
