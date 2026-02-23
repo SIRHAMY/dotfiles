@@ -23,6 +23,7 @@ Packages are split into **common** (linked on all platforms) and **Linux-only** 
 | `ghostty` | Ghostty terminal theme and settings |
 | `zellij` | Zellij terminal multiplexer config and keybindings |
 | `bin` | Custom scripts (`~/.local/bin`) — includes zellij-sessionizer |
+| `nvim` | Neovim config (LazyVim) |
 
 ### Linux only
 

@@ -1,6 +1,6 @@
 os := `uname -s`
 
-packages_common := "zsh tmux git bash ghostty zellij bin"
+packages_common := "zsh tmux git bash ghostty zellij bin nvim"
 packages_linux  := "sway swaylock waybar mako environment.d"
 
 packages := if os == "Darwin" { packages_common } else { packages_common + " " + packages_linux }
