@@ -51,11 +51,11 @@ install-deps:
     set -euo pipefail
     if [[ "{{os}}" == "Darwin" ]]; then
         command -v brew >/dev/null || { echo "Homebrew not found. Install from https://brew.sh"; exit 1; }
-        deps=(stow zsh zoxide fzf ghostty zellij tmux neovim)
+        deps=(stow zsh zoxide fzf ghostty zellij tmux neovim fd)
         echo "Installing with brew: ${deps[*]}"
         brew install "${deps[@]}"
     else
-        deps=(stow zsh zoxide fzf tmux neovim sway swaylock swayidle waybar mako wofi \
+        deps=(stow zsh zoxide fzf tmux neovim fd-find sway swaylock swayidle waybar mako wofi \
               grim slurp wl-clipboard brightnessctl playerctl \
               zsh-autosuggestions zsh-syntax-highlighting)
         echo "Installing with dnf: ${deps[*]}"
