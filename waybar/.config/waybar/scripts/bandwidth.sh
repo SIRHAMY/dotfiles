@@ -31,4 +31,14 @@ else
 fi
 
 echo "$RX $TX $NOW" > "$CACHE"
-printf '{"text": "\u2191%4d kB \u2193%4d kB"}\n' "$TX_KB" "$RX_KB"
+format_speed() {
+    if [ "$1" -ge 1024 ]; then
+        printf "%5.1f MB" "$(echo "$1" | awk '{printf "%.1f", $1/1024}')"
+    else
+        printf "%4d kB" "$1"
+    fi
+}
+
+TX_FMT=$(format_speed "$TX_KB")
+RX_FMT=$(format_speed "$RX_KB")
+printf '{"text": "\u2191%s \u2193%s"}\n' "$TX_FMT" "$RX_FMT"

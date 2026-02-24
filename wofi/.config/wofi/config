@@ -1,0 +1,11 @@
+width=500
+height=340
+prompt=
+show=drun
+allow_images=true
+image_size=24
+columns=1
+matching=fuzzy
+insensitive=true
+no_actions=true
+layer=overlay

@@ -1,15 +1,12 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 36,
-    "spacing": 8,
+    "height": 28,
+    "spacing": 2,
 
-    "modules-left": ["sway/workspaces", "sway/mode"],
-    "modules-center": ["sway/window"],
+    "modules-left": ["cpu", "memory", "disk", "sway/mode", "sway/window"],
+    "modules-center": ["sway/workspaces"],
     "modules-right": [
-        "cpu",
-        "memory",
-        "disk",
         "network",
         "custom/bandwidth",
         "battery",
@@ -34,7 +31,7 @@
     },
 
     "clock": {
-        "format": "{:%Y.%m.%d  %H:%M}",
+        "format": "{:%H:%M}",
         "tooltip-format": "<tt>{calendar}</tt>",
         "calendar": {
             "format": {
