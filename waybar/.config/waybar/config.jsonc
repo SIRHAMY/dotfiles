@@ -4,7 +4,7 @@
     "height": 28,
     "spacing": 2,
 
-    "modules-left": ["cpu", "memory", "disk", "sway/mode", "sway/window"],
+    "modules-left": ["cpu", "memory", "disk", "custom/caffeine", "sway/mode", "sway/window"],
     "modules-center": ["sway/workspaces"],
     "modules-right": [
         "tray",
@@ -128,5 +128,12 @@
 
     "tray": {
         "spacing": 8
+    },
+
+    "custom/caffeine": {
+        "exec": "~/.config/waybar/scripts/caffeine.sh",
+        "on-click": "~/.config/waybar/scripts/caffeine.sh toggle",
+        "return-type": "json",
+        "interval": 2
     }
 }

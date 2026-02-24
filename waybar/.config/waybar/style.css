@@ -79,6 +79,21 @@ window#waybar {
     color: #10b981;
 }
 
+/* Caffeine toggle */
+#custom-caffeine {
+    padding: 0 5px;
+    margin: 2px 1px;
+    border-radius: 4px;
+}
+
+#custom-caffeine.on {
+    color: #10b981;
+}
+
+#custom-caffeine.off {
+    color: #5e6570;
+}
+
 #backlight {
     color: #e5c07b;
 }
