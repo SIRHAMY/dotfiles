@@ -112,8 +112,6 @@ input * xkb_options caps:escape_shifted_capslock
     bindsym $mod+Shift+0 move container to workspace number 10
 
 # Layout
-    bindsym $mod+b splith
-    bindsym $mod+v splitv
     bindsym $mod+s layout stacking
     bindsym $mod+w layout tabbed
     bindsym $mod+e layout toggle split
@@ -121,13 +119,18 @@ input * xkb_options caps:escape_shifted_capslock
     bindsym $mod+Shift+space floating toggle
     bindsym $mod+space focus mode_toggle
     bindsym $mod+a focus parent
+    bindsym $mod+Shift+s sticky toggle
 
 # Rename workspace (keeps number prefix)
     bindsym $mod+n exec ~/.config/sway/rename-workspace.sh
 
 # Scratchpad
-    bindsym $mod+Shift+minus move scratchpad
-    bindsym $mod+minus scratchpad show
+    bindsym $mod+Shift+grave move scratchpad
+    bindsym $mod+grave scratchpad show
+
+# Splits
+    bindsym $mod+minus splith
+    bindsym $mod+backslash splitv
 
 # Resize mode
 mode "resize" {
@@ -144,6 +147,12 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 
+# Direct resize (no mode needed)
+    bindsym $mod+Alt+$left resize shrink width 40px
+    bindsym $mod+Alt+$right resize grow width 40px
+    bindsym $mod+Alt+$up resize shrink height 40px
+    bindsym $mod+Alt+$down resize grow height 40px
+
 # Volume / brightness / media
     bindsym --locked XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
     bindsym --locked XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
@@ -159,12 +168,15 @@ bindsym $mod+r mode "resize"
     # Full screen to file
     bindsym Print exec grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
     # Select area to clipboard
-    bindsym $mod+Shift+s exec grim -g "$(slurp)" - | wl-copy
+    bindsym $mod+Ctrl+s exec grim -g "$(slurp)" - | wl-copy
     # Select area to file
     bindsym $mod+Shift+Print exec grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
 
 # Lock screen
     bindsym $mod+Escape exec swaylock
+
+# Clipboard history (requires cliphist + wl-clipboard)
+    bindsym $mod+v exec cliphist list | wofi --dmenu | cliphist decode | wl-copy
 
 # Zellij sessionizer
     bindsym $mod+p exec ghostty --class=floating-launcher -e ~/.local/bin/zellij-sessionizer
@@ -174,5 +186,6 @@ bindsym $mod+r mode "resize"
 exec waybar
 exec mako
 exec dropbox start -i
+exec wl-paste --watch cliphist store
 
 include /etc/sway/config.d/*

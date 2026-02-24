@@ -17,8 +17,10 @@ window#waybar {
 #clock,
 #cpu,
 #memory,
+#disk,
 #battery,
 #network,
+#custom-bandwidth,
 #pulseaudio,
 #backlight,
 #tray {
@@ -69,8 +71,10 @@ window#waybar {
 /* Default green for all modules */
 #cpu,
 #memory,
+#disk,
 #battery,
 #network,
+#custom-bandwidth,
 #pulseaudio {
     color: #10b981;
 }

@@ -9,7 +9,9 @@
     "modules-right": [
         "cpu",
         "memory",
+        "disk",
         "network",
+        "custom/bandwidth",
         "battery",
         "pulseaudio",
         "backlight",
@@ -42,7 +44,7 @@
     },
 
     "cpu": {
-        "format": "CPU {usage}%",
+        "format": "<span font='Font Awesome 6 Free Solid'>&#xf2db;</span> {usage}%",
         "tooltip-format": "CPU: {usage}% ({avg_frequency}GHz)\n{load} load average",
         "interval": 5,
         "states": {
@@ -53,7 +55,7 @@
     },
 
     "memory": {
-        "format": "MEM {percentage}%",
+        "format": "<span font='Font Awesome 6 Free Solid'>&#xf538;</span> {percentage}%",
         "tooltip-format": "{used:0.1f}G / {total:0.1f}G\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G",
         "interval": 10,
         "states": {
@@ -63,6 +65,13 @@
         }
     },
 
+    "disk": {
+        "interval": 30,
+        "format": "<span font='Font Awesome 6 Free Solid'>&#xf0a0;</span> {percentage_used}%",
+        "path": "/",
+        "tooltip-format": "{used} / {total} ({percentage_used}%)\n{free} free on {path}"
+    },
+
     "battery": {
         "states": {
             "full": 95,
@@ -70,33 +79,53 @@
             "warning": 30,
             "critical": 15
         },
-        "format": "BAT {capacity}%",
-        "format-charging": "CHR {capacity}%",
-        "format-plugged": "PLG {capacity}%",
-        "format-full": "BAT {capacity}%",
+        "format": "{icon} {capacity}%",
+        "format-charging": "<span font='Font Awesome 6 Free Solid'>&#xf0e7;</span> {capacity}%",
+        "format-plugged": "<span font='Font Awesome 6 Free Solid'>&#xf1e6;</span> {capacity}%",
+        "format-full": "<span font='Font Awesome 6 Free Solid'>&#xf240;</span> {capacity}%",
+        "format-icons": [
+            "<span font='Font Awesome 6 Free Solid'>&#xf244;</span>",
+            "<span font='Font Awesome 6 Free Solid'>&#xf243;</span>",
+            "<span font='Font Awesome 6 Free Solid'>&#xf242;</span>",
+            "<span font='Font Awesome 6 Free Solid'>&#xf241;</span>",
+            "<span font='Font Awesome 6 Free Solid'>&#xf240;</span>"
+        ],
         "tooltip-format": "{timeTo}\n{power:.1f}W"
     },
 
     "network": {
-        "format-wifi": "{essid} ({signalStrength}%)",
-        "format-ethernet": "ETH",
-        "format-linked": "NO IP",
-        "format-disconnected": "DISC",
-        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\nUp: {bandwidthUpBits} Down: {bandwidthDownBits}",
+        "format-wifi": "<span font='Font Awesome 6 Free Solid'>&#xf1eb;</span> {signalStrength}%",
+        "format-ethernet": "<span font='Font Awesome 6 Free Solid'>&#xf796;</span>",
+        "format-linked": "<span font='Font Awesome 6 Free Solid'>&#xf796;</span> NO IP",
+        "format-disconnected": "<span font='Font Awesome 6 Free Solid'>&#xf1eb;</span> --",
+        "tooltip-format": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}",
+        "interval": 5
+    },
+
+    "custom/bandwidth": {
+        "exec": "~/.config/waybar/scripts/bandwidth.sh",
+        "return-type": "json",
         "interval": 5
     },
 
     "pulseaudio": {
-        "format": "VOL {volume}%",
-        "format-muted": "MUTE",
-        "format-bluetooth": "BT {volume}%",
+        "format": "{icon} {volume}%",
+        "format-muted": "<span font='Font Awesome 6 Free Solid'>&#xf6a9;</span> MUTE",
+        "format-bluetooth": "<span font='Font Awesome 6 Free Solid'>&#xf294;</span> {volume}%",
+        "format-icons": {
+            "default": [
+                "<span font='Font Awesome 6 Free Solid'>&#xf026;</span>",
+                "<span font='Font Awesome 6 Free Solid'>&#xf027;</span>",
+                "<span font='Font Awesome 6 Free Solid'>&#xf028;</span>"
+            ]
+        },
         "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
         "on-click-right": "pavucontrol",
         "tooltip-format": "{desc}\n{volume}%"
     },
 
     "backlight": {
-        "format": "BRI {percent}%",
+        "format": "<span font='Font Awesome 6 Free Solid'>&#xf185;</span> {percent}%",
         "tooltip": false
     },
 
