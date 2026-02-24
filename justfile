@@ -61,10 +61,11 @@ install-deps:
               grim slurp wl-clipboard brightnessctl playerctl \
               zsh-autosuggestions zsh-syntax-highlighting \
               ibm-plex-sans-fonts ibm-plex-mono-fonts \
-              network-manager-applet)
+              network-manager-applet flatpak)
         echo "Installing with dnf: ${deps[*]}"
         sudo dnf install -y "${deps[@]}"
         just install-zellij
+        just install-flatpaks
     fi
 
 # Install zellij from prebuilt binary
@@ -87,6 +88,15 @@ install-zellij:
     curl -fsSL "$url" | tar -xz -C "$tmpdir"
     install -m 755 "$tmpdir/zellij" "$local_bin/zellij"
     echo "zellij installed to $local_bin/zellij"
+
+# Install flatpak apps
+[private]
+install-flatpaks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpak install -y flathub md.obsidian.Obsidian
+    echo "Flatpak apps installed."
 
 # Install sway session entry (auto-detects NVIDIA at login time)
 setup-sway-session:

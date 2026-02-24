@@ -22,7 +22,7 @@ Packages are split into **common** (linked on all platforms) and **Linux-only** 
 | `bash` | Bash shell config |
 | `ghostty` | Ghostty terminal theme and settings |
 | `zellij` | Zellij terminal multiplexer config and keybindings |
-| `bin` | Custom scripts (`~/.local/bin`) — includes zellij-sessionizer |
+| `bin` | Custom scripts (`~/.local/bin`) — zellij-sessionizer, obsidian-scratchpad |
 | `nvim` | Neovim config (LazyVim) |
 
 ### Linux only
@@ -40,7 +40,9 @@ Packages are split into **common** (linked on all platforms) and **Linux-only** 
 ### Installed by `just setup`
 
 **Fedora:**
-`stow` `zsh` `zoxide` `fzf` `zellij` `tmux` `sway` `swaylock` `swayidle` `waybar` `mako` `wofi` `grim` `slurp` `wl-clipboard` `brightnessctl` `playerctl` `zsh-autosuggestions` `zsh-syntax-highlighting`
+`stow` `zsh` `zoxide` `fzf` `zellij` `tmux` `sway` `swaylock` `swayidle` `waybar` `mako` `wofi` `grim` `slurp` `wl-clipboard` `brightnessctl` `playerctl` `zsh-autosuggestions` `zsh-syntax-highlighting` `flatpak`
+
+**Flatpak apps:** `md.obsidian.Obsidian` (Obsidian notes)
 
 **macOS:**
 `stow` `zsh` `zoxide` `fzf` `ghostty` `zellij` `tmux`
@@ -106,6 +108,12 @@ just reload
 
 ## Zellij Sessionizer
 
-`Super+P` opens a floating fzf picker listing every directory under `~/Code/`. Active zellij sessions are marked with `*`. Select a project to open a new Ghostty terminal attached to that project's zellij session (creating the session if it doesn't exist).
+`Super+P` opens a floating fzf picker listing every directory under `~/Code/`. Active zellij sessions are marked with `*`. Select a project to open a new Ghostty terminal attached to that project's zellij session (creating the session if it doesn't exist). New sessions use the `dev` layout (2 side-by-side panes + a second tab).
 
 **Requires:** `fzf`, `zellij`, `ghostty`, `sway`
+
+## Obsidian Scratchpad
+
+`Super+N` cycles Obsidian as a scratchpad overlay: left half → right half → hidden. If Obsidian isn't running, the first press launches it. Obsidian is installed via Flatpak (`md.obsidian.Obsidian`).
+
+**Requires:** `flatpak`, `obsidian` (flatpak), `sway`
