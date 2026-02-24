@@ -187,5 +187,6 @@ exec waybar
 exec mako
 exec dropbox start -i
 exec wl-paste --watch cliphist store
+exec nm-applet --indicator
 
 include /etc/sway/config.d/*

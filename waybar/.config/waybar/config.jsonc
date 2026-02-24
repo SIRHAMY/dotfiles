@@ -96,7 +96,8 @@
         "format-linked": "<span font='Font Awesome 6 Free Solid'>&#xf796;</span> NO IP",
         "format-disconnected": "<span font='Font Awesome 6 Free Solid'>&#xf1eb;</span> --",
         "tooltip-format": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}",
-        "interval": 5
+        "interval": 5,
+        "on-click": "/usr/bin/nm-connection-editor"
     },
 
     "custom/bandwidth": {

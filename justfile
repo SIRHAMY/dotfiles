@@ -60,7 +60,8 @@ install-deps:
         deps=(stow zsh zoxide fzf tmux neovim fd-find lazygit sway swaylock swayidle waybar mako wofi \
               grim slurp wl-clipboard brightnessctl playerctl \
               zsh-autosuggestions zsh-syntax-highlighting \
-              ibm-plex-sans-fonts ibm-plex-mono-fonts)
+              ibm-plex-sans-fonts ibm-plex-mono-fonts \
+              network-manager-applet)
         echo "Installing with dnf: ${deps[*]}"
         sudo dnf install -y "${deps[@]}"
         just install-zellij
