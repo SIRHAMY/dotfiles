@@ -173,5 +173,6 @@ bindsym $mod+r mode "resize"
 ### Autostart
 exec waybar
 exec mako
+exec dropbox start -i
 
 include /etc/sway/config.d/*
