@@ -7,13 +7,13 @@
     "modules-left": ["cpu", "memory", "disk", "sway/mode", "sway/window"],
     "modules-center": ["sway/workspaces"],
     "modules-right": [
+        "tray",
         "network",
         "custom/bandwidth",
         "battery",
         "pulseaudio",
         "backlight",
-        "clock",
-        "tray"
+        "clock"
     ],
 
     "sway/workspaces": {
