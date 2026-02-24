@@ -1,0 +1,11 @@
+layout {
+    tab name="code" focus=true {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+    }
+    tab name="misc" {
+        pane
+    }
+}

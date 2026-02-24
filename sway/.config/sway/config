@@ -121,8 +121,9 @@ input * xkb_options caps:escape_shifted_capslock
     bindsym $mod+a focus parent
     bindsym $mod+Shift+s sticky toggle
 
-# Rename workspace (keeps number prefix)
-    bindsym $mod+n exec ~/.config/sway/rename-workspace.sh
+# Obsidian scratchpad (toggle with mod+n)
+    bindsym $mod+n exec ~/.local/bin/obsidian-scratchpad
+    for_window [app_id="obsidian"] move scratchpad, resize set 1400 900, move position center
 
 # Scratchpad
     bindsym $mod+Shift+grave move scratchpad

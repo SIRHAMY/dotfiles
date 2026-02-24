@@ -33,4 +33,4 @@ name=$(echo "$selected" | sed 's/^[* ] *//')
 
 # Ask sway to launch a new terminal with the zellij session (fully independent of the picker)
 ZELLIJ_BIN="$HOME/.local/bin/zellij"
-swaymsg exec "ghostty --working-directory='$HOME/Code/$name' -e $ZELLIJ_BIN attach '$name' -c"
+swaymsg exec "ghostty --working-directory='$HOME/Code/$name' -e $ZELLIJ_BIN attach '$name' -c -l dev"
