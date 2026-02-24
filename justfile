@@ -1,7 +1,7 @@
 os := `uname -s`
 
 packages_common := "zsh tmux git bash ghostty zellij bin nvim"
-packages_linux  := "sway swaylock waybar mako environment.d"
+packages_linux  := "sway swaylock waybar mako wofi fontconfig environment.d"
 
 packages := if os == "Darwin" { packages_common } else { packages_common + " " + packages_linux }
 
@@ -59,7 +59,8 @@ install-deps:
         sudo dnf copr enable atim/lazygit -y
         deps=(stow zsh zoxide fzf tmux neovim fd-find lazygit sway swaylock swayidle waybar mako wofi \
               grim slurp wl-clipboard brightnessctl playerctl \
-              zsh-autosuggestions zsh-syntax-highlighting)
+              zsh-autosuggestions zsh-syntax-highlighting \
+              ibm-plex-sans-fonts ibm-plex-mono-fonts)
         echo "Installing with dnf: ${deps[*]}"
         sudo dnf install -y "${deps[@]}"
         just install-zellij

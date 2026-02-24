@@ -11,7 +11,7 @@ set $term ghostty
 set $menu wofi --show drun --allow-images
 
 ### Appearance
-font pango:Sans 11
+font pango:IBM Plex Sans 11
 
 # Window borders
 default_border pixel 1
@@ -129,8 +129,8 @@ input * xkb_options caps:escape_shifted_capslock
     bindsym $mod+grave scratchpad show
 
 # Splits
-    bindsym $mod+minus splith
-    bindsym $mod+backslash splitv
+    bindsym $mod+minus splitv
+    bindsym $mod+backslash splith
 
 # Resize mode
 mode "resize" {

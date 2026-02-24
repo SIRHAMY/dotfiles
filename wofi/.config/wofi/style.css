@@ -2,7 +2,7 @@ window {
     background-color: #161616;
     border: 2px solid #bcc2cc;
     border-radius: 8px;
-    font-family: "Sans", "monospace";
+    font-family: "IBM Plex Sans", "Sans", sans-serif;
     font-size: 13px;
 }
 
