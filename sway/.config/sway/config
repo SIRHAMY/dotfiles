@@ -123,7 +123,7 @@ input * xkb_options caps:escape_shifted_capslock
 
 # Obsidian scratchpad (toggle with mod+n)
     bindsym $mod+n exec ~/.local/bin/obsidian-scratchpad
-    for_window [app_id="obsidian"] move scratchpad, resize set 1400 900, move position center
+    for_window [class="obsidian"] move scratchpad, resize set 1400 900, move position center
 
 # Scratchpad
     bindsym $mod+Shift+grave move scratchpad

@@ -4,7 +4,7 @@
 STATE_FILE="/tmp/obsidian-scratchpad-state"
 
 # Check if obsidian is running at all
-if ! swaymsg -t get_tree | grep -q '"app_id": "obsidian"'; then
+if ! swaymsg -t get_tree | grep -q '"class": "obsidian"'; then
     flatpak run md.obsidian.Obsidian &
     echo "launching" > "$STATE_FILE"
     exit 0
@@ -16,17 +16,17 @@ state=$(cat "$STATE_FILE" 2>/dev/null || echo "hidden")
 case "$state" in
     hidden|launching)
         # Show from scratchpad and snap to left half
-        swaymsg '[app_id=obsidian] scratchpad show, resize set 50 ppt 100 ppt, move position 0 0'
+        swaymsg '[class=obsidian] scratchpad show, resize set 50 ppt 100 ppt, move position 0 0'
         echo "left" > "$STATE_FILE"
         ;;
     left)
         # Move to right half
-        swaymsg '[app_id=obsidian] resize set 50 ppt 100 ppt, move position 50 ppt 0'
+        swaymsg '[class=obsidian] resize set 50 ppt 100 ppt, move position 50 ppt 0'
         echo "right" > "$STATE_FILE"
         ;;
     right)
         # Hide back to scratchpad
-        swaymsg '[app_id=obsidian] move scratchpad'
+        swaymsg '[class=obsidian] move scratchpad'
         echo "hidden" > "$STATE_FILE"
         ;;
 esac
