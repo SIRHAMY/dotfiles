@@ -15,3 +15,7 @@ vim.keymap.set("n", "<leader>cd", function()
   vim.fn.setreg("+", dir)
   vim.notify(dir, vim.log.levels.INFO, { title = "Copied directory" })
 end, { desc = "Copy file directory" })
+
+-- Cycle through buffers
+vim.keymap.set("n", "<Tab>", ":bnext<CR>", { desc = "Next buffer" })
+vim.keymap.set("n", "<S-Tab>", ":bprev<CR>", { desc = "Previous buffer" })
