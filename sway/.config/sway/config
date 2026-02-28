@@ -184,6 +184,7 @@ bindsym $mod+r mode "resize"
     for_window [app_id="floating-launcher"] floating enable, resize set 800 500, move position center
 
 ### Autostart
+exec eval $(gnome-keyring-daemon --start --components=secrets)
 exec waybar
 exec mako
 exec dropbox start -i
