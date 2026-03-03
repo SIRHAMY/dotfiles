@@ -97,7 +97,7 @@
         "format-disconnected": "<span font='Font Awesome 6 Free Solid'>&#xf1eb;</span> --",
         "tooltip-format": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}",
         "interval": 5,
-        "on-click": "/usr/bin/nm-connection-editor"
+        "on-click": "ghostty --class=floating-launcher -e nmtui connect"
     },
 
     "custom/bandwidth": {
