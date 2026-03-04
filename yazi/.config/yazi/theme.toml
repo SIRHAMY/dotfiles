@@ -1,0 +1,182 @@
+# Terminal Garden theme for yazi
+# Colors pulled from ghostty terminal-garden palette
+
+# : Manager {{{
+
+[mgr]
+cwd = { fg = "#10b981" }
+
+# Find
+find_keyword  = { fg = "#d19a66", bold = true, italic = true, underline = true }
+find_position = { fg = "#c678dd", bg = "reset", bold = true, italic = true }
+
+# Marker
+marker_copied   = { fg = "#10b981", bg = "#10b981" }
+marker_cut      = { fg = "#e06c75", bg = "#e06c75" }
+marker_marked   = { fg = "#56b6c2", bg = "#56b6c2" }
+marker_selected = { fg = "#d19a66", bg = "#d19a66" }
+
+# Count
+count_copied   = { fg = "#161616", bg = "#10b981" }
+count_cut      = { fg = "#161616", bg = "#e06c75" }
+count_selected = { fg = "#161616", bg = "#d19a66" }
+
+# Border
+border_symbol = "│"
+border_style  = { fg = "#5e6570" }
+
+# : }}}
+
+
+# : Tabs {{{
+
+[tabs]
+active   = { fg = "#161616", bg = "#10b981", bold = true }
+inactive = { fg = "#10b981", bg = "#1e2127" }
+
+# : }}}
+
+
+# : Mode {{{
+
+[mode]
+
+normal_main = { fg = "#161616", bg = "#10b981", bold = true }
+normal_alt  = { fg = "#10b981", bg = "#1e2127" }
+
+# Select mode
+select_main = { fg = "#161616", bg = "#10b981", bold = true }
+select_alt  = { fg = "#10b981", bg = "#1e2127" }
+
+# Unset mode
+unset_main = { fg = "#161616", bg = "#e06c75", bold = true }
+unset_alt  = { fg = "#e06c75", bg = "#1e2127" }
+
+# : }}}
+
+
+# : Status bar {{{
+
+[status]
+# Permissions
+perm_sep   = { fg = "#5e6570" }
+perm_type  = { fg = "#bcc2cc" }
+perm_read  = { fg = "#d19a66" }
+perm_write = { fg = "#e06c75" }
+perm_exec  = { fg = "#10b981" }
+
+# Progress
+progress_label  = { fg = "#bcc2cc", bold = true }
+progress_normal = { fg = "#10b981", bg = "#1e2127" }
+progress_error  = { fg = "#d19a66", bg = "#e06c75" }
+
+# : }}}
+
+
+# : Pick {{{
+
+[pick]
+border   = { fg = "#61afef" }
+active   = { fg = "#c678dd", bold = true }
+inactive = {}
+
+# : }}}
+
+
+# : Input {{{
+
+[input]
+border   = { fg = "#61afef" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+# : }}}
+
+
+# : Completion {{{
+
+[cmp]
+border = { fg = "#61afef" }
+
+# : }}}
+
+
+# : Tasks {{{
+
+[tasks]
+border  = { fg = "#61afef" }
+title   = {}
+hovered = { fg = "#c678dd", bold = true }
+
+# : }}}
+
+
+# : Which {{{
+
+[which]
+mask            = { bg = "#1e2127" }
+cand            = { fg = "#10b981" }
+rest            = { fg = "#5e6570" }
+desc            = { fg = "#c678dd" }
+separator       = "  "
+separator_style = { fg = "#5e6570" }
+
+# : }}}
+
+
+# : Help {{{
+
+[help]
+on      = { fg = "#10b981" }
+run     = { fg = "#c678dd" }
+hovered = { reversed = true, bold = true }
+footer  = { fg = "#1e2127", bg = "#bcc2cc" }
+
+# : }}}
+
+
+# : Spotter {{{
+
+[spot]
+border   = { fg = "#61afef" }
+title    = { fg = "#61afef" }
+tbl_col  = { fg = "#10b981" }
+tbl_cell = { fg = "#c678dd", bg = "#1e2127" }
+
+# : }}}
+
+
+# : Notification {{{
+
+[notify]
+title_info  = { fg = "#10b981" }
+title_warn  = { fg = "#d19a66" }
+title_error = { fg = "#e06c75" }
+
+# : }}}
+
+
+# : File-specific styles {{{
+
+[filetype]
+
+rules = [
+	# Image
+	{ mime = "image/*", fg = "#56b6c2" },
+	# Media
+	{ mime = "{audio,video}/*", fg = "#d19a66" },
+	# Archive
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#c678dd" },
+	# Document
+	{ mime = "application/{pdf,doc,rtf}", fg = "#10b981" },
+	# Virtual file system
+	{ mime = "vfs/{absent,stale}", fg = "#5e6570" },
+	# Fallback
+	{ url = "*", fg = "#bcc2cc" },
+	{ url = "*/", fg = "#61afef" },
+]
+
+# : }}}
+
+
