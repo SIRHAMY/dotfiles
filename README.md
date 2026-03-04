@@ -117,3 +117,18 @@ just reload
 `Super+N` cycles Obsidian as a scratchpad overlay: left half → right half → hidden. If Obsidian isn't running, the first press launches it. Obsidian is installed via Flatpak (`md.obsidian.Obsidian`).
 
 **Requires:** `flatpak`, `obsidian` (flatpak), `sway`
+
+## Cheatsheet
+
+### Neovim
+
+| Action | Keys |
+|--------|------|
+| Toggle hidden files in explorer | `Shift+H` |
+| Open file | `:e path/to/file` |
+| Vertical split | `:vs` or `:vs path/to/file` |
+| Navigate splits | `Ctrl+w h/j/k/l` |
+| Fuzzy find buffers | `<leader>fb` |
+| Next/prev buffer | `Tab` / `Shift+Tab` |
+| Copy file path | `<leader>cp` |
+| Copy file directory | `<leader>cd` |
