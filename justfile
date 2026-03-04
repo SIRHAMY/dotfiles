@@ -65,6 +65,7 @@ install-deps:
         echo "Installing with dnf: ${deps[*]}"
         sudo dnf install -y "${deps[@]}"
         just install-zellij
+        just install-yazi
         just install-flatpaks
     fi
 
@@ -88,6 +89,29 @@ install-zellij:
     curl -fsSL "$url" | tar -xz -C "$tmpdir"
     install -m 755 "$tmpdir/zellij" "$local_bin/zellij"
     echo "zellij installed to $local_bin/zellij"
+
+# Install yazi from prebuilt binary
+[private]
+install-yazi:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v yazi >/dev/null; then
+        echo "yazi already installed, skipping."
+        exit 0
+    fi
+    echo "Installing yazi from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    arch=$(uname -m)
+    url="https://github.com/sxyazi/yazi/releases/latest/download/yazi-${arch}-unknown-linux-musl.zip"
+    echo "Downloading $url"
+    curl -fsSL "$url" -o "$tmpdir/yazi.zip"
+    unzip -o "$tmpdir/yazi.zip" -d "$tmpdir"
+    install -m 755 "$tmpdir/yazi-${arch}-unknown-linux-musl/yazi" "$local_bin/yazi"
+    install -m 755 "$tmpdir/yazi-${arch}-unknown-linux-musl/ya" "$local_bin/ya"
+    echo "yazi installed to $local_bin/yazi"
 
 # Install flatpak apps
 [private]
