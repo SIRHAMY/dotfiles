@@ -16,6 +16,12 @@ vim.keymap.set("n", "<leader>cd", function()
   vim.notify(dir, vim.log.levels.INFO, { title = "Copied directory" })
 end, { desc = "Copy file directory" })
 
+-- Preview current file in default system viewer
+vim.keymap.set("n", "<leader>p", function()
+  local cmd = vim.fn.has("macunix") == 1 and "open" or "xdg-open"
+  vim.fn.jobstart({ cmd, vim.fn.expand("%:p") })
+end, { desc = "Preview file" })
+
 -- Cycle through buffers
 vim.keymap.set("n", "<Tab>", ":bnext<CR>", { desc = "Next buffer" })
 vim.keymap.set("n", "<S-Tab>", ":bprev<CR>", { desc = "Previous buffer" })
