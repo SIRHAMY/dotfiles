@@ -120,6 +120,27 @@ just reload
 
 ## Cheatsheet
 
+### Sway
+
+#### Navigation & movement
+
+| Action | Keys |
+|--------|------|
+| Focus direction | `Super+h/j/k/l` or `Super+Arrows` |
+| Move container direction | `Super+Ctrl+h/j/k/l` or `Super+Ctrl+Arrows` |
+| Move workspace to output | `Super+Shift+h/j/k/l` or `Super+Shift+Arrows` |
+
+#### Workspaces
+
+Workspaces 1-10 are the primary set, 11-20 are the secondary set (useful for multi-monitor).
+
+| Action | Keys |
+|--------|------|
+| Switch to workspace 1-10 | `Super+1-0` |
+| Switch to workspace 11-20 | `Super+Shift+1-0` |
+| Move container to workspace 1-10 | `Super+Ctrl+1-0` |
+| Move container to workspace 11-20 | `Super+Ctrl+Shift+1-0` |
+
 ### Neovim
 
 | Action | Keys |
