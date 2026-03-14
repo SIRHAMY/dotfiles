@@ -51,7 +51,7 @@ install-deps:
     set -euo pipefail
     if [[ "{{os}}" == "Darwin" ]]; then
         command -v brew >/dev/null || { echo "Homebrew not found. Install from https://brew.sh"; exit 1; }
-        deps=(stow zsh zoxide fzf ghostty zellij tmux neovim fd lazygit)
+        deps=(stow zsh zoxide fzf ghostty zellij tmux neovim fd lazygit yazi)
         echo "Installing with brew: ${deps[*]}"
         brew install "${deps[@]}"
     else
@@ -66,6 +66,7 @@ install-deps:
         sudo dnf install -y "${deps[@]}"
         just install-zellij
         just install-yazi
+        just install-resvg
         just install-flatpaks
     fi
 
@@ -112,6 +113,26 @@ install-yazi:
     install -m 755 "$tmpdir/yazi-${arch}-unknown-linux-musl/yazi" "$local_bin/yazi"
     install -m 755 "$tmpdir/yazi-${arch}-unknown-linux-musl/ya" "$local_bin/ya"
     echo "yazi installed to $local_bin/yazi"
+
+# Install resvg from prebuilt binary (SVG renderer, used by yazi for previews)
+[private]
+install-resvg:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v resvg >/dev/null; then
+        echo "resvg already installed, skipping."
+        exit 0
+    fi
+    echo "Installing resvg from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    url="https://github.com/linebender/resvg/releases/latest/download/resvg-linux-x86_64.tar.gz"
+    echo "Downloading $url"
+    curl -fsSL "$url" | tar -xz -C "$tmpdir"
+    install -m 755 "$tmpdir/resvg" "$local_bin/resvg"
+    echo "resvg installed to $local_bin/resvg"
 
 # Install flatpak apps
 [private]
