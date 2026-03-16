@@ -3,7 +3,7 @@
 -- Add any additional keymaps here
 
 -- Copy current file path to clipboard
-vim.keymap.set("n", "<leader>cp", function()
+vim.keymap.set("n", "<leader>cc", function()
   local path = vim.fn.expand("%:p")
   vim.fn.setreg("+", path)
   vim.notify(path, vim.log.levels.INFO, { title = "Copied path" })

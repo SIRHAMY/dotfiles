@@ -30,10 +30,12 @@ client.urgent            #e06c75 #161616    #bcc2cc #e06c75   #e06c75
 output eDP-1 scale 1.5
 
 # Left monitor - vertical (rotated 90° clockwise)
-output DP-2 resolution 2560x1440 position 0,0 transform 270
+# Native res is 2048x1080; rotated 270° gives effective 1080x2048
+output DP-2 resolution 2048x1080 position 0,0 transform 270
 
 # Right monitor - landscape, centered against vertical
-output DP-1 resolution 2560x1440 position 1440,560
+# x = 1080 (right edge of rotated DP-2), y = (2048-1440)/2 = 304
+output DP-1 resolution 2560x1440 position 1080,304
 
 output * bg ~/.config/sway/wallpaper.png fill
 
