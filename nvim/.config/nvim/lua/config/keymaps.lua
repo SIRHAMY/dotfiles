@@ -2,12 +2,14 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
--- Copy current file path to clipboard
-vim.keymap.set("n", "<leader>cc", function()
+-- Copy current file path to clipboard (<leader>cp as backup for langs that override <leader>cc)
+local function copy_file_path()
   local path = vim.fn.expand("%:p")
   vim.fn.setreg("+", path)
   vim.notify(path, vim.log.levels.INFO, { title = "Copied path" })
-end, { desc = "Copy file path" })
+end
+vim.keymap.set("n", "<leader>cc", copy_file_path, { desc = "Copy file path" })
+vim.keymap.set("n", "<leader>cp", copy_file_path, { desc = "Copy file path" })
 
 -- Copy current file directory to clipboard
 vim.keymap.set("n", "<leader>cd", function()
