@@ -155,7 +155,7 @@ input * xkb_options caps:escape_shifted_capslock
 
 # Scratchpad
     bindsym $mod+Shift+grave move scratchpad
-    bindsym $mod+grave scratchpad show
+    bindsym $mod+grave exec ~/.local/bin/scratchpad-toggle
 
 # Splits
     bindsym $mod+minus splitv

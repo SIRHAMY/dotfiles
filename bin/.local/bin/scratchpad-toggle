@@ -1,0 +1,7 @@
+#!/bin/sh
+LOCKFILE=/tmp/scratchpad-toggle.lock
+[ -f "$LOCKFILE" ] && exit 0
+touch "$LOCKFILE"
+swaymsg scratchpad show
+sleep 0.2
+rm -f "$LOCKFILE"
