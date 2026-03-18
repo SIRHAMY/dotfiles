@@ -2,9 +2,21 @@
 # Cycle Obsidian scratchpad: hidden → left half → right half → hidden
 
 STATE_FILE="/tmp/obsidian-scratchpad-state"
+LOCKFILE="/tmp/obsidian-scratchpad.lock"
+
+# Debounce: skip if another invocation is running
+if [ -f "$LOCKFILE" ]; then
+    exit 0
+fi
+touch "$LOCKFILE"
+trap 'rm -f "$LOCKFILE"' EXIT
 
 # Check if obsidian is running at all
 if ! swaymsg -t get_tree | grep -q '"app_id": "obsidian"'; then
+    # Check if we already launched and are waiting for it to appear
+    if pgrep -f 'flatpak run md.obsidian.Obsidian' > /dev/null || pgrep -f 'obsidian.sh' > /dev/null; then
+        exit 0
+    fi
     flatpak run md.obsidian.Obsidian &
     echo "launching" > "$STATE_FILE"
     exit 0
