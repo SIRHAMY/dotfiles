@@ -4,41 +4,54 @@
 STATE_FILE="/tmp/obsidian-scratchpad-state"
 LOCKFILE="/tmp/obsidian-scratchpad.lock"
 
-# Debounce: skip if another invocation is running
-if [ -f "$LOCKFILE" ]; then
-    exit 0
-fi
-touch "$LOCKFILE"
-trap 'rm -f "$LOCKFILE"' EXIT
-
-# Check if obsidian is running at all
-if ! swaymsg -t get_tree | grep -q '"app_id": "obsidian"'; then
-    # Check if we already launched and are waiting for it to appear
-    if pgrep -f 'flatpak run md.obsidian.Obsidian' > /dev/null || pgrep -f 'obsidian.sh' > /dev/null; then
+# Atomic lock using mkdir (atomic on all filesystems, unlike file-based checks)
+if ! mkdir "$LOCKFILE" 2>/dev/null; then
+    # Stale lock protection: if lock is older than 30s, remove it and retry
+    if [ -d "$LOCKFILE" ] && find "$LOCKFILE" -maxdepth 0 -mmin +0.5 2>/dev/null | grep -q .; then
+        rmdir "$LOCKFILE" 2>/dev/null
+        mkdir "$LOCKFILE" 2>/dev/null || exit 0
+    else
         exit 0
     fi
-    flatpak run md.obsidian.Obsidian &
-    echo "launching" > "$STATE_FILE"
+fi
+trap 'rmdir "$LOCKFILE" 2>/dev/null' EXIT
+
+# Check if obsidian is in sway's tree
+if swaymsg -t get_tree | grep -q '"app_id": "obsidian"'; then
+    # Obsidian is registered with sway — cycle its position
+    state=$(cat "$STATE_FILE" 2>/dev/null || echo "hidden")
+    case "$state" in
+        hidden|launching)
+            swaymsg '[app_id=obsidian] scratchpad show, resize set 50 ppt 100 ppt, move position 0 0'
+            echo "left" > "$STATE_FILE"
+            ;;
+        left)
+            swaymsg '[app_id=obsidian] resize set 50 ppt 100 ppt, move position 50 ppt 0'
+            echo "right" > "$STATE_FILE"
+            ;;
+        right)
+            swaymsg '[app_id=obsidian] move scratchpad'
+            echo "hidden" > "$STATE_FILE"
+            ;;
+    esac
     exit 0
 fi
 
-# Read last state
-state=$(cat "$STATE_FILE" 2>/dev/null || echo "hidden")
+# Obsidian is not in sway's tree. Only launch if no instance is running at all.
+if pgrep -f 'flatpak run md.obsidian.Obsidian' > /dev/null || pgrep -f 'obsidian.sh' > /dev/null; then
+    # Already launched but not yet registered with sway — do nothing
+    exit 0
+fi
 
-case "$state" in
-    hidden|launching)
-        # Show from scratchpad and snap to left half
-        swaymsg '[app_id=obsidian] scratchpad show, resize set 50 ppt 100 ppt, move position 0 0'
-        echo "left" > "$STATE_FILE"
-        ;;
-    left)
-        # Move to right half
-        swaymsg '[app_id=obsidian] resize set 50 ppt 100 ppt, move position 50 ppt 0'
-        echo "right" > "$STATE_FILE"
-        ;;
-    right)
-        # Hide back to scratchpad
-        swaymsg '[app_id=obsidian] move scratchpad'
-        echo "hidden" > "$STATE_FILE"
-        ;;
-esac
+# Launch Obsidian and keep the lock held until it appears in sway's tree
+# This prevents any concurrent invocations from launching duplicates
+flatpak run md.obsidian.Obsidian &
+echo "launching" > "$STATE_FILE"
+
+# Wait up to 30s for Obsidian to register with sway (keeps lock held)
+for i in $(seq 1 60); do
+    sleep 0.5
+    if swaymsg -t get_tree | grep -q '"app_id": "obsidian"'; then
+        exit 0
+    fi
+done
