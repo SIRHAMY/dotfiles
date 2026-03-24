@@ -141,6 +141,38 @@ Workspaces 1-10 are the primary set, 11-20 are the secondary set (useful for mul
 | Move container to workspace 1-10 | `Super+Ctrl+1-0` |
 | Move container to workspace 11-20 | `Super+Ctrl+Shift+1-0` |
 
+### Zellij
+
+#### Sessions
+
+| Action | Keys / Command |
+|--------|----------------|
+| Open project sessionizer | `Super+P` (see [Zellij Sessionizer](#zellij-sessionizer)) |
+| Start with dev layout manually | `zellij -l dev` |
+
+#### Pane navigation
+
+| Action | Keys |
+|--------|------|
+| Move focus left/down/up/right | `Alt+h/j/k/l` |
+
+#### Pane management
+
+Enter pane mode with `Ctrl+p`, then:
+
+| Action | Key |
+|--------|-----|
+| New pane (auto direction) | `n` |
+| Split down (horizontal) | `d` |
+| Split right (vertical) | `r` |
+| Close pane | `x` |
+
+#### Tab navigation
+
+| Action | Keys |
+|--------|------|
+| Previous/next tab | `Alt+[` / `Alt+]` |
+
 ### Neovim
 
 | Action | Keys |
