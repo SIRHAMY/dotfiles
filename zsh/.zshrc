@@ -59,5 +59,7 @@ zp() {
 # --- Aliases ---
 alias clauded='claude --dangerously-skip-permissions'
 alias vim='vimx'
+alias zls='zellij list-sessions'
+alias za='zellij attach'
 # opencode
 export PATH=/home/sirhamy/.opencode/bin:$PATH
