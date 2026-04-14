@@ -24,12 +24,7 @@ vim.keymap.set("n", "<leader>p", function()
   vim.fn.jobstart({ cmd, vim.fn.expand("%:p") })
 end, { desc = "Preview file" })
 
--- Send deletes to black hole register so they don't clobber the clipboard
-vim.keymap.set("n", "d", '"_d', { desc = "Delete to black hole" })
-vim.keymap.set("n", "dd", '"_dd', { desc = "Delete line to black hole" })
-vim.keymap.set("n", "D", '"_D', { desc = "Delete to end to black hole" })
-vim.keymap.set("n", "x", '"_x', { desc = "Delete char to black hole" })
-vim.keymap.set("x", "d", '"_d', { desc = "Delete to black hole (visual)" })
+-- Paste over visual selection without clobbering the yank register
 vim.keymap.set("x", "p", '"_dP', { desc = "Paste over selection without yanking" })
 
 -- Cycle through buffers
