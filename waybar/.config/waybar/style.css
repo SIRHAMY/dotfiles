@@ -90,6 +90,10 @@ window#waybar {
     color: #10b981;
 }
 
+#custom-caffeine.lock {
+    color: #f59e0b;
+}
+
 #custom-caffeine.off {
     color: #5e6570;
 }
