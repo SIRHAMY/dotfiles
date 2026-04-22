@@ -1,8 +1,7 @@
 #!/bin/bash
-# 3-mode caffeine toggle for waybar
-#   off:  normal swayidle behavior (lock + screen off + suspend)
-#   lock: blocks suspend, swayidle still locks + powers screen off
-#   on:   blocks everything, swayidle -w actions never fire
+# Caffeine toggle for waybar
+#   off: normal swayidle behavior (lock + screen off, lid-close suspends)
+#   on:  inhibits idle, sleep, and lid-switch — bag-safe, nothing fires
 
 STATEFILE="/tmp/waybar-caffeine.state"
 PIDFILE="/tmp/waybar-caffeine.pid"
@@ -27,17 +26,15 @@ start_inhibitor() {
 apply_state() {
     kill_inhibitor
     case "$1" in
-        lock) start_inhibitor "sleep:handle-lid-switch" ;;
-        on)   start_inhibitor "idle:sleep:handle-lid-switch" ;;
+        on) start_inhibitor "idle:sleep:handle-lid-switch" ;;
     esac
     echo "$1" > "$STATEFILE"
 }
 
 toggle() {
     case "$(read_state)" in
-        off)  apply_state "lock" ;;
-        lock) apply_state "on" ;;
-        *)    apply_state "off" ;;
+        off) apply_state "on" ;;
+        *)   apply_state "off" ;;
     esac
 }
 
@@ -56,9 +53,6 @@ status() {
     case "$state" in
         on)
             printf '{"text": "<span font='\''Font Awesome 6 Free Solid'\''>&#xf06e;</span>", "tooltip": "Caffeine: ON — no sleep, no lock", "class": "on"}\n'
-            ;;
-        lock)
-            printf '{"text": "<span font='\''Font Awesome 6 Free Solid'\''>&#xf023;</span>", "tooltip": "Caffeine: LOCK-OK — stays awake, still locks", "class": "lock"}\n'
             ;;
         *)
             printf '{"text": "<span font='\''Font Awesome 6 Free Solid'\''>&#xf070;</span>", "tooltip": "Caffeine: OFF — normal sleep and lock", "class": "off"}\n'
