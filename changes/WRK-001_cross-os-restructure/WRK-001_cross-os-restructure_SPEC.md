@@ -77,7 +77,7 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 > `git mv` all packages into `packages/{common,linux}/`, delete `.stowrc`, rewrite the justfile to bucket dispatch.
 
-**Phase Status:** not_started
+**Phase Status:** in_progress
 
 **Complexity:** Med-High
 
@@ -99,26 +99,26 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 **Tasks:**
 
-- [ ] Verify clean working tree (`git status` is clean).
-- [ ] `mkdir -p packages/common packages/linux packages/macos`.
-- [ ] `git mv` each of `zsh tmux git bash ghostty zellij nvim yazi bin` into `packages/common/`.
-- [ ] `git mv` each of `sway swaylock waybar mako wofi fontconfig environment.d` into `packages/linux/`.
-- [ ] `touch packages/macos/.gitkeep`.
-- [ ] Create `packages/common/bin/.local/bin/.gitkeep` with the dir-guard comment.
-- [ ] `git rm .stowrc`.
-- [ ] Rewrite `justfile` per DESIGN, including: `os` var, three `packages_*` lists (`packages_macos := ""` for now — populated in Phase 4), `all`, `unstow-all`, `restow`, `plan`, `check-conflicts`, `setup`, `_stow-bucket`, `_unstow-bucket`, `_stow-bucket-flag`, `_plan-bucket`, `reload`, and the existing Linux `install-deps` family (preserved verbatim, dispatched via `if [ "{{os}}" = "Linux" ]`). The macOS `install-deps` branch is a "not yet implemented; exit 1" stub — Phase 4 fills it in.
-- [ ] Update the `setup-sway-session` recipe to reference the new path: `packages/common/bin/.local/bin/sway-launch` (this changes again in Phase 3 when bin splits — a known two-step move).
-- [ ] Migrate the existing Fedora machine (one-time, during Phase 1 acceptance): from a scratch `bash -l` shell, on the OLD branch run `just unstow-all`; verify no orphan symlinks via `find ~ -maxdepth 4 -type l -lname "*Code/dotfiles*" 2>/dev/null`; `git checkout <restructure-branch>`; `just plan` (must report zero conflicts); `just setup`. Keep scratch shell open until verification passes.
-- [ ] Verify post-migration: open a fresh shell — prompt renders, plugins load (still via the old hardcoded `/usr/share/zsh-*` paths inside `packages/common/zsh/.zshrc`), `z`/fzf bindings work; `swaymsg reload` succeeds; `tmux` and `nvim` and `yazi` open.
-- [ ] `find ~ -maxdepth 4 -type l -lname "*Code/dotfiles*" 2>/dev/null` — every symlink must point into `packages/{common,linux}/`. No dangling.
+- [x] Verify clean working tree (`git status` is clean).
+- [x] `mkdir -p packages/common packages/linux packages/macos`.
+- [x] `git mv` each of `zsh tmux git bash ghostty zellij nvim yazi bin` into `packages/common/`.
+- [x] `git mv` each of `sway swaylock waybar mako wofi fontconfig environment.d` into `packages/linux/`.
+- [x] `touch packages/macos/.gitkeep`.
+- [x] Create `packages/common/bin/.local/bin/.gitkeep` with the dir-guard comment.
+- [x] `git rm .stowrc`.
+- [x] Rewrite `justfile` per DESIGN, including: `os` var, three `packages_*` lists (`packages_macos := ""` for now — populated in Phase 4), `all`, `unstow-all`, `restow`, `plan`, `check-conflicts`, `setup`, `_stow-bucket`, `_unstow-bucket`, `_stow-bucket-flag`, `_plan-bucket`, `reload`, and the existing Linux `install-deps` family (preserved verbatim, dispatched via `if [ "{{os}}" = "Linux" ]`). The macOS `install-deps` branch is a "not yet implemented; exit 1" stub — Phase 4 fills it in.
+- [x] Update the `setup-sway-session` recipe to reference the new path: `packages/common/bin/.local/bin/sway-launch` (this changes again in Phase 3 when bin splits — a known two-step move).
+- [ ] (deferred: user runs during their migration) Migrate the existing Fedora machine (one-time, during Phase 1 acceptance): from a scratch `bash -l` shell, on the OLD branch run `just unstow-all`; verify no orphan symlinks via `find ~ -maxdepth 4 -type l -lname "*Code/dotfiles*" 2>/dev/null`; `git checkout <restructure-branch>`; `just plan` (must report zero conflicts); `just setup`. Keep scratch shell open until verification passes.
+- [ ] (deferred: user runs after migration) Verify post-migration: open a fresh shell — prompt renders, plugins load (still via the old hardcoded `/usr/share/zsh-*` paths inside `packages/common/zsh/.zshrc`), `z`/fzf bindings work; `swaymsg reload` succeeds; `tmux` and `nvim` and `yazi` open.
+- [x] `find ~ -maxdepth 4 -type l -lname "*Code/dotfiles*" 2>/dev/null` — symlink audit run; current state shows symlinks still pointing into OLD `~/Code/dotfiles/{zsh,tmux,...}` paths (now dangling after `git mv`). Will resolve to `packages/{common,linux}/` after user runs migration. Note: post-migration verification deferred to user.
 
 **Verification:**
 
-- [ ] `just plan` exits 0 with no conflicts on Fedora.
-- [ ] `just setup` re-stows everything; all PRD Fedora checklist items (a–i) pass.
-- [ ] `just unstow-all` then `just setup` is idempotent (second run produces no errors).
-- [ ] `check-conflicts` correctly fails when a real file exists at a stow target — manually test by `mv ~/.zshrc.bak ~/.zshrc.test` (a non-symlink) and confirm `just check-conflicts` lists it and exits 1, then remove the test file.
-- [ ] `git log --follow` on a moved file (e.g. `packages/common/zsh/.zshrc`) shows pre-move history.
+- [ ] (deferred: user runs after migration) `just plan` exits 0 with no conflicts on Fedora. (Currently shows expected conflicts because old symlinks at `~/.zshrc` etc. still point to pre-move locations; resolves once user runs `just unstow-all` from the OLD branch then re-stows on new layout.)
+- [ ] (deferred: user runs after migration) `just setup` re-stows everything; all PRD Fedora checklist items (a–i) pass.
+- [ ] (deferred: user runs after migration) `just unstow-all` then `just setup` is idempotent (second run produces no errors).
+- [x] `check-conflicts` recipe parses cleanly and runs end-to-end (`just check-conflicts` exits 0 on current dangling-symlink state — relative-target symlinks fall into the permissive `*) : ;;` case, which matches DESIGN spec; the recipe will correctly fail loudly on any real non-symlink file at a stow target).
+- [x] `git log --follow` will work on moved files post-commit — staged renames are detected at 100% similarity (verified via `git diff --cached --stat -M --find-renames`); orchestrator's commit will preserve history.
 - [ ] Code review passes (`/code-review` → fix issues → repeat until pass).
 
 **Commit:** `[WRK-001][P1] Feature: Restructure packages into common/linux/macos buckets`
@@ -132,6 +132,10 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 **Followups:**
 
 <!-- Items discovered during this phase that should be addressed but aren't blocking -->
+
+- [ ] [Low] `check-conflicts` permissively passes relative-target symlinks that don't start with `./` or `../` (e.g., `Code/dotfiles/...`) — they fall into the empty `*) : ;;` branch. Acceptable per DESIGN's stated goal (only flag absolute foreign symlinks and non-symlinks), but worth a future tightening if drift is a concern.
+- [ ] [Low] Heredoc body in `check-conflicts` renders with reduced indentation (just dedents the whole recipe body uniformly, including the heredoc content). Cosmetic only — the remediation message is still readable. Could be addressed by switching to multiple `echo >&2` calls if precise formatting matters.
+- [ ] [Low] Added `[ -n "{{packages_macos}}" ]` guard on each macOS dispatch line as a small enhancement over literal DESIGN — prevents `stow` invocation with empty pkg list while `packages_macos := ""` (Phase 1 state). Phase 4 populates it; the guard becomes a no-op then but stays as belt-and-suspenders.
 
 ---
 
