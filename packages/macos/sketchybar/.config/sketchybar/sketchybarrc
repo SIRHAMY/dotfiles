@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
-# SketchyBar config — per-monitor AeroSpace workspace pills, mirrors waybar's
-# `sway/workspaces` with `all-outputs=false`. MVP scope: workspace pills only,
-# right-aligned, one item per (monitor × workspace). Plugin script flips
-# drawing/colors on AeroSpace workspace changes and monitor hotplug.
+# SketchyBar config — AeroSpace workspace pills (center, per-monitor) +
+# system widgets (right-aligned), mirroring waybar's Linux layout. Workspace
+# pills track AeroSpace via `aerospace_workspace_change`; system modules use
+# per-item update_freq and built-in sketchybar events (volume_change,
+# power_source_change, system_woke).
 
 PLUGIN_DIR="$CONFIG_DIR/plugins"
 
 # Palette — lifted from packages/linux/waybar/.config/waybar/style.css
-COLOR_BG=0xff161616        # bar background
-COLOR_FG=0xffbcc2cc        # inactive pill label
-COLOR_ACTIVE=0xff10b981    # focused pill background (waybar green)
-COLOR_ACTIVE_FG=0xff161616 # focused pill label (dark on green)
+COLOR_BG=0xff161616         # bar background
+COLOR_FG=0xffbcc2cc         # default label
+COLOR_ACTIVE=0xff10b981     # focused pill background (waybar green)
+COLOR_ACTIVE_FG=0xff161616  # focused pill label (dark on green)
+COLOR_WARN=0xffd19a66       # waybar amber (cpu/memory/battery warning)
+COLOR_CRIT=0xffe06c75       # waybar red (cpu/memory/battery critical)
+
+ICON_FONT="SF Pro:Semibold:13.0"
 
 sketchybar --bar position=top \
                  height=28 \
@@ -21,24 +26,26 @@ sketchybar --bar position=top \
 
 sketchybar --default updates=when_shown \
                      label.font="SF Pro:Semibold:13.0" \
+                     icon.font="$ICON_FONT" \
                      label.color=$COLOR_FG \
+                     icon.color=$COLOR_FG \
                      padding_left=2 \
                      padding_right=2 \
                      background.corner_radius=4 \
                      background.height=20 \
                      background.color=0x00000000
 
-# Pre-declare items for monitors 1..3 × workspaces 1..20. Items pinned to a
-# non-existent display are silently no-op'd by SketchyBar, so over-declaring is
-# safe on single/dual-monitor setups. drawing=off until the plugin enables them.
+# Pre-declare workspace pills for monitors 1..3 × workspaces 1..20. Items
+# pinned to a non-existent display are silently no-op'd by SketchyBar, so
+# over-declaring is safe on single/dual-monitor setups. drawing=off until the
+# plugin enables them.
 #
-# Reverse iteration (20 -> 1): right-aligned items grow leftward from the
-# right edge, so the first item added is rightmost. We want ascending order
-# reading left-to-right, so add the highest workspace first.
+# Center-aligned: items render left-to-right in declaration order, so iterate
+# ascending 1..20 to read 1,2,3...
 for monitor in 1 2 3; do
-  for ws in $(seq 20 -1 1); do
+  for ws in $(seq 1 20); do
     sid="space.$monitor.$ws"
-    sketchybar --add item "$sid" right \
+    sketchybar --add item "$sid" center \
                --set "$sid" \
                      display="$monitor" \
                      drawing=off \
@@ -49,8 +56,9 @@ for monitor in 1 2 3; do
   done
 done
 
-# Custom events must be registered before items can subscribe. `display_change`
-# is built-in; `aerospace_workspace_change` is what aerospace.toml's
+# Custom events must be registered before items can subscribe. `display_change`,
+# `volume_change`, `power_source_change`, and `system_woke` are built-in;
+# `aerospace_workspace_change` is what aerospace.toml's
 # `exec-on-workspace-change` triggers.
 sketchybar --add event aerospace_workspace_change
 
@@ -64,8 +72,74 @@ sketchybar --add item ws.controller right \
                  script="$PLUGIN_DIR/aerospace_workspaces.sh" \
            --subscribe ws.controller aerospace_workspace_change display_change
 
+# System widgets, right-aligned. SketchyBar grows right items leftward, so the
+# first item added becomes the rightmost on screen. Order added (rightmost →
+# leftmost): clock, battery, wifi, audio, memory, cpu, disk.
+
+sketchybar --add item clock right \
+           --set clock \
+                 update_freq=30 \
+                 script="$PLUGIN_DIR/clock.sh" \
+                 label.padding_left=6 \
+                 label.padding_right=6 \
+           --subscribe clock system_woke
+
+sketchybar --add item battery right \
+           --set battery \
+                 update_freq=60 \
+                 script="$PLUGIN_DIR/battery.sh" \
+                 icon.padding_left=6 \
+                 icon.padding_right=2 \
+                 label.padding_right=6 \
+           --subscribe battery power_source_change system_woke
+
+sketchybar --add item wifi right \
+           --set wifi \
+                 update_freq=60 \
+                 script="$PLUGIN_DIR/wifi.sh" \
+                 icon.padding_left=6 \
+                 icon.padding_right=2 \
+                 label.padding_right=6 \
+           --subscribe wifi system_woke
+
+sketchybar --add item audio right \
+           --set audio \
+                 script="$PLUGIN_DIR/audio.sh" \
+                 icon.padding_left=6 \
+                 icon.padding_right=2 \
+                 label.padding_right=6 \
+           --subscribe audio volume_change system_woke
+
+sketchybar --add item memory right \
+           --set memory \
+                 update_freq=10 \
+                 script="$PLUGIN_DIR/memory.sh" \
+                 icon.padding_left=6 \
+                 icon.padding_right=2 \
+                 label.padding_right=6 \
+           --subscribe memory system_woke
+
+sketchybar --add item cpu right \
+           --set cpu \
+                 update_freq=5 \
+                 script="$PLUGIN_DIR/cpu.sh" \
+                 icon.padding_left=6 \
+                 icon.padding_right=2 \
+                 label.padding_right=6 \
+           --subscribe cpu system_woke
+
+sketchybar --add item disk right \
+           --set disk \
+                 update_freq=60 \
+                 script="$PLUGIN_DIR/disk.sh" \
+                 icon.padding_left=6 \
+                 icon.padding_right=2 \
+                 label.padding_right=6 \
+           --subscribe disk system_woke
+
 sketchybar --update
 
 # Initial paint — SketchyBar doesn't fire aerospace_workspace_change on its own
-# at startup, so seed the state directly.
+# at startup, so seed the workspace state directly. The system modules paint
+# via --update above (and on their first update_freq tick).
 "$PLUGIN_DIR/aerospace_workspaces.sh"
