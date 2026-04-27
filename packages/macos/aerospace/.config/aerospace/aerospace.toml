@@ -18,6 +18,11 @@ default-root-container-orientation = 'auto'
 
 automatically-unhide-macos-hidden-apps = false
 
+# Reserve 28px at the top so tiled windows don't sit under SketchyBar.
+# Must match the `--bar height` in sketchybar/.config/sketchybar/sketchybarrc.
+[gaps]
+outer.top = 28
+
 [mode.main.binding]
 # Directional focus
 alt-h = 'focus left'
