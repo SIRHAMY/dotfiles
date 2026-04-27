@@ -1,164 +1,235 @@
 # dotfiles
 
-Public configuration files for my development environment, managed with [GNU Stow](https://www.gnu.org/software/stow/).
+Public configuration files for my development environment, managed with [GNU Stow](https://www.gnu.org/software/stow/) and `just`. Targets Fedora (sway-based personal box) and macOS (work machine, AeroSpace-based) from a single source tree.
 
 **This repo is for public configs only.** No secrets, API keys, or private tooling.
 
-## How it works
+## 1. What this repo is
 
-Each top-level directory is a stow "package". Stow symlinks its contents into `~`, so a file at `sway/.config/sway/config` becomes `~/.config/sway/config`. When adding new configs, mirror the target path inside the package directory.
+A stow-managed dotfiles repo split into three buckets — `packages/common/`, `packages/linux/`, `packages/macos/`. `just setup` on either OS produces a working terminal (Ghostty), shell (zsh + plugins + zoxide + fzf), editor (nvim/LazyVim), multiplexers (zellij, tmux), file manager (yazi), and window manager config (sway on Linux, AeroSpace on Mac). Editing OS-specific config means editing a file whose path names the OS — no `case $OSTYPE` inside config bodies.
 
-Packages are split into **common** (linked on all platforms) and **Linux-only** (linked only on Linux). The justfile detects the OS automatically.
+## 2. The three-rule taxonomy
 
-## Packages
+1. **Package split.** Every stow package lives under exactly one of `packages/{common,linux,macos}/<pkg>/`. Common is linked everywhere; linux/macos buckets are linked only on the matching OS.
+2. **`conf.d/` loader pattern.** Shared-but-divergent apps (today: zsh; scaffolded for tmux) ship a loader in the common package that sources a lexicographic glob of `conf.d/*` snippets, then `conf.d/os.<key>/*` snippets where `<key>` is `uname -s` lowercased (`linux` or `darwin`).
+3. **Filesystem-based OS branching.** OS branches live in filenames and directory paths, not in `case $OSTYPE` / `if [[ Darwin ]]` inside config bodies. The loader's one-line dispatch is the only OS conditional in any config file.
 
-### Common (Linux + macOS)
+## 3. Loader Contract — 5 rules
 
-| Package | What it configures |
-|---------|-------------------|
-| `zsh` | Shell config, aliases, prompt |
-| `tmux` | Terminal multiplexer keybindings and settings |
-| `git` | Git user config |
-| `bash` | Bash shell config |
-| `ghostty` | Ghostty terminal theme and settings |
-| `zellij` | Zellij terminal multiplexer config and keybindings |
-| `bin` | Custom scripts (`~/.local/bin`) — zellij-sessionizer, obsidian-scratchpad |
-| `nvim` | Neovim config (LazyVim) |
+The load-bearing invariant of the architecture:
 
-### Linux only
+1. **Directory-guard ownership.** Each shared target directory (`~/.config/zsh/conf.d/`, `~/.local/bin/`) is owned by a `.gitkeep` inside the common package. OS-specific packages must not also place a `.gitkeep` in the same directory.
+2. **OS-specific contents live under `conf.d/os.<key>/`.** OS packages must only add files under `conf.d/os.<key>/`. Never add files directly to `conf.d/`. Never add an `os.darwin/` dir from a Linux package or vice versa. To override a common snippet, use the same numeric prefix in an OS-specific snippet — OS-specific is sourced after common, last-write wins.
+3. **Key-to-bucket match.** `linux` bucket uses `os.linux/`; `macos` bucket uses `os.darwin/`. Bucket names match directory names; keys match `uname -s` normalized.
+4. **No `exit` / `return N` at snippet top level.** Snippets are `source`d. An `exit 1` kills the login shell. Use guarded conditionals (`[ -r "$f" ] && source "$f"`).
+5. **Fail-safe loader.** A missing `conf.d/os.<key>/` directory is tolerated. A syntax error in a snippet prints to stderr and the loader moves on. A broken snippet must never abort zsh startup.
 
-| Package | What it configures |
-|---------|-------------------|
-| `sway` | Sway window manager |
-| `swaylock` | Lock screen appearance |
-| `waybar` | Waybar status bar |
-| `mako` | Mako notification daemon |
-| `environment.d` | Systemd environment variables (e.g. Electron Wayland, PATH) |
+`just check-conflicts` enforces Rule 1 by walking the package tree directly. Rules 2–4 are author discipline.
 
-## Dependencies
+## 4. Concrete `conf.d` example
 
-### Installed by `just setup`
+```
+~/.config/zsh/                                         (stowed)
+├── .zshrc                                             ← loader (common/zsh)
+├── .zshenv                                            ← brew shellenv (Mac only, from zsh-macos)
+└── conf.d/
+    ├── .gitkeep                                       ← dir-guard, owned by common/zsh
+    ├── 10-shell.zsh                                   ← common
+    ├── 20-prompt.zsh                                  ← common
+    ├── 30-path.zsh                                    ← common
+    ├── 40-functions.zsh                               ← common
+    ├── 50-aliases.zsh                                 ← common
+    ├── os.linux/                                      ← only on Linux
+    │   ├── 10-plugins.zsh                             ← /usr/share/zsh-* sources
+    │   ├── 20-aliases.zsh                             ← alias vim='vimx'
+    │   └── 30-paths.zsh                               ← cargo + opencode
+    └── os.darwin/                                     ← only on Mac
+        ├── 10-brew.zsh                                ← $HOMEBREW_PREFIX plugin sources
+        └── 20-aliases.zsh                             ← alias ls='ls -G'
+```
 
-**Fedora:**
-`stow` `zsh` `zoxide` `fzf` `zellij` `tmux` `sway` `swaylock` `swayidle` `waybar` `mako` `wofi` `grim` `slurp` `wl-clipboard` `brightnessctl` `playerctl` `zsh-autosuggestions` `zsh-syntax-highlighting` `flatpak`
-
-**Flatpak apps:** `md.obsidian.Obsidian` (Obsidian notes)
-
-**macOS:**
-`stow` `zsh` `zoxide` `fzf` `ghostty` `zellij` `tmux`
-
-### Manual install required
-
-| Package | Notes |
-|---------|-------|
-| `just` | Task runner. Install first: `dnf install just` / `brew install just` |
-| `ghostty` (Fedora) | Not in default repos. Install from [ghostty.org](https://ghostty.org) or a COPR |
-| `cargo` / Rust toolchain | For tools installed via cargo. Install from [rustup.rs](https://rustup.rs) |
-
-## Usage
-
-### Fresh machine setup
+The loader (excerpt from `packages/common/zsh/.config/zsh/.zshrc`):
 
 ```sh
-# Install prerequisites
-sudo dnf install -y stow just   # Fedora
-brew install stow just           # macOS
+case "$OSTYPE" in darwin*) os_key=darwin ;; linux*) os_key=linux ;; *) os_key="$(uname -s | tr '[:upper:]' '[:lower:]')" ;; esac
+ZDOTCONFD="${ZDOTDIR:-$HOME/.config/zsh}/conf.d"
+setopt null_glob
+for f in "$ZDOTCONFD"/*.zsh "$ZDOTCONFD/os.$os_key"/*.zsh; do
+  [ -r "$f" ] || continue
+  source "$f"
+done
+unsetopt null_glob
+```
 
-# Clone and set up
+## 5. How to add an OS-specific snippet
+
+Scenario: an `fnm` PATH export on Mac only.
+
+1. Create `packages/macos/zsh-macos/.config/zsh/conf.d/os.darwin/40-fnm.zsh` with the `export PATH=...` line.
+2. `git add && git commit && git push`.
+3. On the Mac, `git pull`. Two cases:
+   - **File added to an already-stowed `os.darwin/` dir:** the symlink already points into the package tree, so the new file is visible immediately. No stow needed.
+   - **First file in a newly-created `os.<key>/` subdirectory:** run `just restow` once to re-link the package and pick up the new subdir.
+4. Open a new shell — the snippet is sourced.
+
+Rule of thumb: if in doubt, `just restow` — it's idempotent and cheap.
+
+## 6. How to add a new top-level package
+
+Scenario: add `starship` as a common package.
+
+1. `mkdir -p packages/common/starship/.config/starship` and create files mirroring the target paths under `~`.
+2. Add `starship` to the `packages_common` list in `justfile`.
+3. `just plan` to verify no conflicts.
+4. `git commit && just restow` (or `just setup` for the full pass).
+
+For an OS-specific package (e.g. `tmux-macos` on first divergence): create under `packages/macos/`, register in `packages_macos`, and if it contributes to a shared directory drop a `.gitkeep` in the common owner per Rule 1.
+
+**Note on `--no-folding`:** every stow invocation in `justfile` passes `--no-folding`. Stow's tree-folding will collapse single-package directories into one symlink, which breaks cross-bucket sharing of directories like `~/.config/zsh/`. `.gitkeep` placeholders alone are insufficient when packages live under different `-d` (stow-dir) values, so the helpers (`_stow-bucket`, `_stow-bucket-flag`, `_plan-bucket`) all force `--no-folding`.
+
+## 7. Per-OS install instructions
+
+**Prerequisites (manual, one-time):**
+
+Fedora:
+```sh
+sudo dnf install -y just stow git
+```
+
+macOS:
+```sh
+# Install Homebrew first if you don't have it:
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install just stow git
+```
+
+**Then on either OS:**
+
+```sh
 git clone git@github.com:SIRHAMY/dotfiles.git ~/Code/dotfiles
 cd ~/Code/dotfiles
 just setup
 ```
 
-### Link everything
+`just setup` runs `install-deps` (dnf on Fedora; brew + casks on Mac), then `check-conflicts`, then `all` (per-bucket stow). On Linux it also runs `setup-sway-session`.
+
+## 8. macOS setup
+
+After `just setup` finishes, three manual one-time steps:
+
+1. **Caps Lock → Escape.** System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys → set Caps Lock to Escape. Mac handles this natively; no Karabiner needed.
+2. **AeroSpace Accessibility permission.** Launch AeroSpace (`open -a AeroSpace`). When prompted, grant Accessibility permission in System Settings → Privacy & Security → Accessibility. Then `aerospace reload-config`.
+3. **brew shellenv handled automatically.** `packages/macos/zsh-macos/.config/zsh/.zshenv` evals `brew shellenv` on every zsh invocation (login or not), so new tmux/zellij panes get `$HOMEBREW_PREFIX` and brew binaries on `PATH` without `.zprofile`-only weirdness.
+
+**MDM fallback (managed work Mac).** If brew or cask installs are blocked by MDM, you can still stow the common configs by hand, skipping `install-deps`:
 
 ```sh
-just all
+stow --no-folding -d packages/common -t ~ $(ls packages/common)
 ```
 
-### Link a single package
+You will be missing the brew formulae (zsh plugins, fzf, etc.) and the casks (Ghostty, AeroSpace), but the configs themselves will link. File a ticket with IT for the missing pieces.
+
+## 9. Post-merge Mac validation workflow
+
+Once the restructure is merged to `main`, fixing Mac-specific issues from any computer is a normal commit, not a migration:
+
+1. **Discover** a Mac-specific issue (wrong cask name, an AeroSpace bind that fights a system shortcut, etc.).
+2. **Edit from any computer** — the Fedora box, the Mac itself, or anywhere. Almost always a one-file edit: a cask name in `justfile`, a path in `packages/macos/zsh-macos/.config/zsh/conf.d/os.darwin/*.zsh`, a keybind in `packages/macos/aerospace/.config/aerospace/aerospace.toml`.
+3. **Commit and push** to `main` (or a short-lived branch if you want review).
+4. **Pull on the Mac** and re-run `just setup` — idempotent. For config-only changes, `git pull` alone may suffice; the stowed symlinks already point into the repo, so zsh/tmux/aerospace pick up changes on next reload (`tmux source ~/.tmux.conf`, `aerospace reload-config`, or open a new shell).
+5. **No migration dance.** Just normal commits on `main`.
+
+## 10. Migration path for the existing Fedora machine
+
+The one-time painful path. PRD risk: "Stow conflicts during migration."
+
+1. **Open a scratch shell now** — a second Ghostty window running `bash -l`, kept open for the whole migration. If the zsh rewrite breaks mid-flight this is your lifeline. Do not close it until a fresh zsh from a *third* Ghostty window works.
+2. Verify clean working tree: `git status` — must be clean before checkout.
+3. `cd ~/Code/dotfiles && just unstow-all` (run this on the OLD branch — operates on the flat `<pkg>/` roots that existed pre-restructure).
+4. Verify no orphan symlinks: `find ~ -maxdepth 4 -type l -lname "*Code/dotfiles*" 2>/dev/null` — should be empty after unstow. If not, `rm` the orphans manually.
+5. `git checkout <restructure-branch>` (or `main` if already merged).
+6. `just plan` — verify zero stow conflicts. If any, fix before proceeding.
+7. `just setup` — `check-conflicts` catches any leftover real files (e.g. a `.zshrc` that wasn't managed by stow), re-stows from the new layout, reloads sway.
+8. Open a *third* terminal window (new zsh). Confirm prompt, plugins, zoxide, fzf bindings all work.
+9. Close the scratch shell.
+
+**Recovery if zsh breaks:** from the scratch `bash -l` shell:
 
 ```sh
-just stow zsh
+mv ~/.zshenv ~/.zshenv.broken
+mv ~/.zshrc  ~/.zshrc.broken 2>/dev/null
 ```
 
-### Unlink a single package
+A new zsh will then start with defaults, no `ZDOTDIR`, no loader. Debug from there.
+
+## 11. Reversibility
+
+- `just unstow-all` removes every symlink stow placed in `~`. Three-bucket form: OS bucket unwinds first (so OS-specific dir guards clean up before the common owner), then common.
+- `just unstow-all` does NOT uninstall packages and does NOT revert system settings (Caps→Esc, AeroSpace Accessibility grant, NVIDIA grub edits, etc.).
+- `just restow` runs `stow -R --no-folding` per bucket. Use after deleting a snippet file to clear dangling symlinks, or after adding a file in a brand-new `os.<key>/` subdirectory.
+
+## 12. Loader debugging
+
+When a snippet errors:
+
+- Errors print to stderr at shell start — read what zsh says.
+- For stuck cases, start zsh with no rc files: `zsh -f`. This skips `.zshenv`, `.zshrc`, and the loader entirely.
+- Move the offending snippet aside without deleting it: `mv 99-foo.zsh 99-foo.zsh.disabled`. The loader globs `*.zsh`, so `.disabled` is ignored. Then `just restow` to clean up the stale symlink and restart your shell.
+- If `~/.zshenv` itself is broken (rare — it's tiny), use the recovery escape from §10.
+
+## 13. Hand-invocation note
+
+`just` is the supported entry point. If you must run `stow` directly, you need both `-d packages/<bucket>` and `-t ~` (and `--no-folding` to match the justfile's behavior):
 
 ```sh
-just unstow zsh
+stow --no-folding -d packages/common -t ~ zsh
+stow -D --no-folding -d packages/linux -t ~ sway     # unlink
 ```
 
-### Unlink everything
+`.stowrc` was deliberately removed — it used to hardcode `--target=/home/sirhamy`, which was non-portable. The `justfile` is now the single source of truth for stow invocation.
 
-```sh
-just unstow-all
-```
+## 14. Cheatsheet
 
-### Dry run (see what would be linked)
-
-```sh
-just plan
-```
-
-### Reload running apps (Linux)
-
-```sh
-just reload
-```
-
-## Zellij Sessionizer
-
-`Super+P` opens a floating fzf picker listing every directory under `~/Code/`. Active zellij sessions are marked with `*`. Select a project to open a new Ghostty terminal attached to that project's zellij session (creating the session if it doesn't exist). New sessions use the `dev` layout (2 side-by-side panes + a second tab).
-
-**Requires:** `fzf`, `zellij`, `ghostty`, `sway`
-
-## Obsidian Scratchpad
-
-`Super+N` cycles Obsidian as a scratchpad overlay: left half → right half → hidden. If Obsidian isn't running, the first press launches it. Obsidian is installed via Flatpak (`md.obsidian.Obsidian`).
-
-**Requires:** `flatpak`, `obsidian` (flatpak), `sway`
-
-## Cheatsheet
-
-### Sway
-
-#### Navigation & movement
+### Sway (Linux)
 
 | Action | Keys |
 |--------|------|
 | Focus direction | `Super+h/j/k/l` or `Super+Arrows` |
 | Move container direction | `Super+Ctrl+h/j/k/l` or `Super+Ctrl+Arrows` |
 | Move workspace to output | `Super+Shift+h/j/k/l` or `Super+Shift+Arrows` |
-
-#### Workspaces
-
-Workspaces 1-10 are the primary set, 11-20 are the secondary set (useful for multi-monitor).
-
-| Action | Keys |
-|--------|------|
 | Switch to workspace 1-10 | `Super+1-0` |
 | Switch to workspace 11-20 | `Super+Shift+1-0` |
 | Move container to workspace 1-10 | `Super+Ctrl+1-0` |
 | Move container to workspace 11-20 | `Super+Ctrl+Shift+1-0` |
+| Open project sessionizer | `Super+P` (see `packages/linux/bin-linux/.local/bin/zellij-sessionizer`) |
+| Cycle Obsidian scratchpad | `Super+N` |
 
-### Zellij
+### AeroSpace (macOS)
 
-#### Sessions
-
-| Action | Keys / Command |
-|--------|----------------|
-| Open project sessionizer | `Super+P` (see [Zellij Sessionizer](#zellij-sessionizer)) |
-| Start with dev layout manually | `zellij -l dev` |
-
-#### Pane navigation
+Mirrors the sway shape with `Alt` replacing `Super`. From `packages/macos/aerospace/.config/aerospace/aerospace.toml`:
 
 | Action | Keys |
 |--------|------|
+| Focus left/down/up/right | `Alt+h/j/k/l` |
+| Move container left/down/up/right | `Alt+Shift+h/j/k/l` |
+| Switch to workspace 1-9 | `Alt+1-9` |
+| Move container to workspace 1-9 | `Alt+Shift+1-9` |
+| Close window | `Alt+Shift+q` |
+| Reload config | `Alt+Shift+c` |
+| Fullscreen | `Alt+f` |
+
+Launcher and terminal-spawn binds are deliberately unset on Mac — use Spotlight (`Cmd+Space`) or Raycast until day-1 experience tells us what to bind.
+
+### Zellij
+
+| Action | Keys / Command |
+|--------|----------------|
+| Open project sessionizer | `Super+P` (Linux only) |
+| Start with dev layout manually | `zellij -l dev` |
 | Move focus left/down/up/right | `Alt+h/j/k/l` |
+| Previous/next tab | `Alt+[` / `Alt+]` |
 
-#### Pane management
-
-Enter pane mode with `Ctrl+p`, then:
+Pane mode (`Ctrl+p`), then:
 
 | Action | Key |
 |--------|-----|
@@ -166,12 +237,6 @@ Enter pane mode with `Ctrl+p`, then:
 | Split down (horizontal) | `d` |
 | Split right (vertical) | `r` |
 | Close pane | `x` |
-
-#### Tab navigation
-
-| Action | Keys |
-|--------|------|
-| Previous/next tab | `Alt+[` / `Alt+]` |
 
 ### Neovim
 
