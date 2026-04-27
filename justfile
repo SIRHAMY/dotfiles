@@ -1,7 +1,7 @@
 os := `uname -s`
 
 packages_common := "zsh tmux ghostty zellij nvim yazi git bash bin"
-packages_linux  := "sway swaylock waybar mako wofi fontconfig environment.d"
+packages_linux  := "zsh-linux sway swaylock waybar mako wofi fontconfig environment.d"
 packages_macos  := ""
 
 # Link everything for the current OS. Pre-flights conflicts (fails loud on any
@@ -98,7 +98,7 @@ _stow-bucket bucket *pkgs:
     set -euo pipefail
     for pkg in {{pkgs}}; do
       echo "Stowing $pkg from packages/{{bucket}}..."
-      stow -d packages/{{bucket}} -t ~ "$pkg"
+      stow --no-folding -d packages/{{bucket}} -t ~ "$pkg"
     done
 
 [private]
@@ -115,7 +115,7 @@ _stow-bucket-flag flag bucket *pkgs:
     #!/usr/bin/env bash
     set -euo pipefail
     for pkg in {{pkgs}}; do
-      stow {{flag}} -d packages/{{bucket}} -t ~ "$pkg"
+      stow {{flag}} --no-folding -d packages/{{bucket}} -t ~ "$pkg"
     done
 
 [private]
@@ -123,7 +123,7 @@ _plan-bucket bucket *pkgs:
     #!/usr/bin/env bash
     for pkg in {{pkgs}}; do
       echo "=== $pkg ==="
-      stow -n -v -d packages/{{bucket}} -t ~ "$pkg" 2>&1
+      stow -n -v --no-folding -d packages/{{bucket}} -t ~ "$pkg" 2>&1
     done
 
 # Install dependencies for the current OS

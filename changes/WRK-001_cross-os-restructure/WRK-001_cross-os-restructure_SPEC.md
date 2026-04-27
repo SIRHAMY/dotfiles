@@ -143,7 +143,7 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 > Migrate zsh to `$ZDOTDIR=~/.config/zsh` with a `conf.d/` loader; split content into common snippets + `zsh-linux` package.
 
-**Phase Status:** not_started
+**Phase Status:** completed (live-machine verification deferred to user migration)
 
 **Complexity:** Med-High
 
@@ -172,25 +172,25 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 **Tasks:**
 
-- [ ] Open a scratch shell (a second Ghostty window running `bash -l`) — do NOT close until phase verification passes.
-- [ ] Create the new files listed above with content sourced from current `.zshrc` per the split rules.
-- [ ] Verify zsh syntax of every snippet: `zsh -n packages/common/zsh/.zshenv && for f in packages/common/zsh/.config/zsh/.zshrc packages/common/zsh/.config/zsh/conf.d/*.zsh packages/linux/zsh-linux/.config/zsh/conf.d/os.linux/*.zsh; do zsh -n "$f" || echo "FAIL: $f"; done`.
-- [ ] `git rm packages/common/zsh/.zshrc` (the old top-level file).
-- [ ] Add `zsh-linux` to `packages_linux` in `justfile`.
-- [ ] Re-stow: `just restow` (re-runs `stow -R` per bucket; cleans up dangling symlinks from the deleted top-level `.zshrc` and links the new `.zshenv` + `.config/zsh/` tree). The new `zsh-linux` package is picked up because it's now in `packages_linux`.
-- [ ] Confirm `~/.zshenv` is now a symlink into `packages/common/zsh/.zshenv` and `~/.config/zsh/.zshrc` is a symlink into the loader.
-- [ ] In a third Ghostty window: `echo $ZDOTDIR` must print `$HOME/.config/zsh`. Prompt renders. `which z` resolves. `zsh-autosuggestions` and `zsh-syntax-highlighting` active (test by typing a partial command and observing suggestion). `vim` resolves to `vimx`. `zp` function defined (`type zp`).
-- [ ] Test fail-safe loader: drop a deliberately-broken snippet `packages/common/zsh/.config/zsh/conf.d/99-broken.zsh` containing `not-a-real-command`; open a new shell — must print error but must not abort startup. Then delete the broken file and `just restow`.
-- [ ] Close scratch shell only after the third-window test passes.
+- [ ] (deferred: user runs during their migration) Open a scratch shell (a second Ghostty window running `bash -l`) — do NOT close until phase verification passes.
+- [x] Create the new files listed above with content sourced from current `.zshrc` per the split rules.
+- [x] Verify zsh syntax of every snippet: `zsh -n packages/common/zsh/.zshenv && for f in packages/common/zsh/.config/zsh/.zshrc packages/common/zsh/.config/zsh/conf.d/*.zsh packages/linux/zsh-linux/.config/zsh/conf.d/os.linux/*.zsh; do zsh -n "$f" || echo "FAIL: $f"; done` — all 10 files pass.
+- [x] `git rm packages/common/zsh/.zshrc` (the old top-level file).
+- [x] Add `zsh-linux` to `packages_linux` in `justfile`.
+- [ ] (deferred: user runs after migration) Re-stow: `just restow` (re-runs `stow -R` per bucket; cleans up dangling symlinks from the deleted top-level `.zshrc` and links the new `.zshenv` + `.config/zsh/` tree). The new `zsh-linux` package is picked up because it's now in `packages_linux`.
+- [ ] (deferred: user runs after migration) Confirm `~/.zshenv` is now a symlink into `packages/common/zsh/.zshenv` and `~/.config/zsh/.zshrc` is a symlink into the loader.
+- [ ] (deferred: user runs after migration) In a third Ghostty window: `echo $ZDOTDIR` must print `$HOME/.config/zsh`. Prompt renders. `which z` resolves. `zsh-autosuggestions` and `zsh-syntax-highlighting` active (test by typing a partial command and observing suggestion). `vim` resolves to `vimx`. `zp` function defined (`type zp`).
+- [ ] (deferred: user runs after migration) Test fail-safe loader: drop a deliberately-broken snippet `packages/common/zsh/.config/zsh/conf.d/99-broken.zsh` containing `not-a-real-command`; open a new shell — must print error but must not abort startup. Then delete the broken file and `just restow`.
+- [ ] (deferred: user runs after migration) Close scratch shell only after the third-window test passes.
 
 **Verification:**
 
-- [ ] `stow -n` on `packages/common/zsh` + `packages/linux/zsh-linux` reports zero conflicts.
-- [ ] All Fedora PRD checklist items (a)–(i) still pass.
-- [ ] `echo $ZDOTDIR` shows `~/.config/zsh` in a fresh shell.
-- [ ] `grep -rE 'case \$OSTYPE|\[\[ Darwin' packages/common/zsh/ packages/linux/zsh-linux/` returns nothing (no in-body OS conditionals; the loader's `case $OSTYPE` is the only allowed one and it's in a loader, not a config body).
-- [ ] Broken-snippet test confirms loader is fail-safe.
-- [ ] Code review passes.
+- [x] `stow -n --no-folding` on `packages/common/zsh` + `packages/linux/zsh-linux` against scratch target reports zero conflicts (verified individually and combined). Note: `--no-folding` is required for cross-bucket sharing of `~/.config/zsh/` to work — `.gitkeep` alone is insufficient when packages live under different stow-dirs (different `-d`). Justfile's `_stow-bucket` / `_stow-bucket-flag` / `_plan-bucket` helpers updated to pass `--no-folding`.
+- [ ] (deferred: user runs after migration) All Fedora PRD checklist items (a)–(i) still pass.
+- [ ] (deferred: user runs after migration) `echo $ZDOTDIR` shows `~/.config/zsh` in a fresh shell.
+- [x] `grep -rE 'case \$OSTYPE|\[\[ Darwin' packages/common/zsh/ packages/linux/zsh-linux/` matches only the loader's documenting comment line in `.config/zsh/.zshrc` ("# Filesystem-based OS dispatch. No case $OSTYPE inside snippets."). No in-body OS conditionals in any snippet.
+- [ ] (deferred: user runs after migration) Broken-snippet test confirms loader is fail-safe.
+- [x] Code review passes (self-review covered loader source, snippet content fidelity, four incidental fixes, OS-conditional grep clean, file headers/comments clean).
 
 **Commit:** `[WRK-001][P2] Feature: Migrate zsh to ZDOTDIR + conf.d loader`
 
@@ -204,6 +204,9 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 **Followups:**
 
 <!-- Items discovered during this phase that should be addressed but aren't blocking -->
+
+- [ ] [Medium] Stow's `.gitkeep` directory-guard trick does NOT cooperate across different `-d` (stow-dir) values. TECH_RESEARCH Q1 implied the `.gitkeep` would be sufficient, but in practice when `common/zsh` (stow-dir `packages/common`) and `zsh-linux` (stow-dir `packages/linux`) both contribute to `~/.config/zsh/`, the second stow invocation fails with "existing target is not owned by stow: .config/zsh" because stow folded the directory during the first invocation. Resolved by adding `--no-folding` to `_stow-bucket`, `_stow-bucket-flag`, and `_plan-bucket` in `justfile`. Worth a DESIGN.md update so future readers don't try the `.gitkeep`-only path again.
+- [x] Added `packages/common/zsh/.config/zsh/.gitkeep` (in addition to the design-spec'd `conf.d/.gitkeep`) as belt-and-suspenders against folding inside `.config/zsh/` itself. With `--no-folding` enabled this is redundant, but harmless and cheap.
 
 ---
 
