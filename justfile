@@ -153,10 +153,11 @@ install-deps:
         brew install stow zsh zoxide fzf zellij tmux neovim fd lazygit yazi \
             zsh-autosuggestions zsh-syntax-highlighting
         # Cask installs are guarded for idempotency: brew --cask install errors
-        # on already-installed in some versions.
-        for cask in ghostty aerospace; do
-            brew list --cask "$cask" &>/dev/null || brew install --cask "$cask"
-        done
+        # on already-installed in some versions. AeroSpace is in a third-party
+        # tap (nikitabobko/tap), so install with the fully-qualified name; the
+        # short name still works for the `brew list` idempotency probe.
+        brew list --cask ghostty &>/dev/null || brew install --cask ghostty
+        brew list --cask aerospace &>/dev/null || brew install --cask nikitabobko/tap/aerospace
     else
         echo "Unsupported OS: {{os}}" >&2
         exit 1
