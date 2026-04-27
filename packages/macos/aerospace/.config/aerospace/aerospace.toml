@@ -78,6 +78,18 @@ alt-ctrl-8 = 'move-node-to-workspace 8'
 alt-ctrl-9 = 'move-node-to-workspace 9'
 alt-ctrl-0 = 'move-node-to-workspace 10'
 
+# Move focused container to workspace 11-20 (alt-ctrl-shift-N; mirrors sway $mod+Ctrl+Shift+N)
+alt-ctrl-shift-1 = 'move-node-to-workspace 11'
+alt-ctrl-shift-2 = 'move-node-to-workspace 12'
+alt-ctrl-shift-3 = 'move-node-to-workspace 13'
+alt-ctrl-shift-4 = 'move-node-to-workspace 14'
+alt-ctrl-shift-5 = 'move-node-to-workspace 15'
+alt-ctrl-shift-6 = 'move-node-to-workspace 16'
+alt-ctrl-shift-7 = 'move-node-to-workspace 17'
+alt-ctrl-shift-8 = 'move-node-to-workspace 18'
+alt-ctrl-shift-9 = 'move-node-to-workspace 19'
+alt-ctrl-shift-0 = 'move-node-to-workspace 20'
+
 alt-shift-q = 'close'
 alt-shift-c = 'reload-config'
 alt-f       = 'fullscreen'

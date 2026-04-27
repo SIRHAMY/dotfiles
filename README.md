@@ -214,12 +214,16 @@ Mirrors the sway shape with `Alt` replacing `Super`. From `packages/macos/aerosp
 | Action | Keys |
 |--------|------|
 | Focus left/down/up/right | `Alt+h/j/k/l` |
-| Move container left/down/up/right | `Alt+Shift+h/j/k/l` |
-| Switch to workspace 1-9 | `Alt+1-9` |
-| Move container to workspace 1-9 | `Alt+Shift+1-9` |
+| Move container left/down/up/right | `Alt+Ctrl+h/j/k/l` |
+| Move workspace to prev/next monitor | `Alt+Shift+h` / `Alt+Shift+l` |
+| Switch to workspace 1-10 | `Alt+1-0` |
+| Switch to workspace 11-20 | `Alt+Shift+1-0` |
+| Move container to workspace 1-10 | `Alt+Ctrl+1-0` |
+| Move container to workspace 11-20 | `Alt+Ctrl+Shift+1-0` |
 | Close window | `Alt+Shift+q` |
 | Reload config | `Alt+Shift+c` |
 | Fullscreen | `Alt+f` |
+| Flatten + balance workspace tree | `Alt+Shift+r` |
 
 Launcher and terminal-spawn binds are deliberately unset on Mac — use Spotlight (`Cmd+Space`) or Raycast until day-1 experience tells us what to bind.
 
@@ -253,6 +257,34 @@ Pane mode (`Ctrl+p`), then:
 | Split down (horizontal) | `d` |
 | Split right (vertical) | `r` |
 | Close pane | `x` |
+
+### Debugging phantom windows
+
+A workspace shows tiling slots for windows you can't see (app quit but the window record lingered, a hidden/minimized window AeroSpace still tracks, etc.). List what the WM thinks is there, then kill by ID.
+
+**AeroSpace (macOS):**
+
+```sh
+aerospace list-windows --workspace focused          # current workspace
+aerospace list-windows --workspace 3                # specific workspace
+aerospace list-windows --all                        # everything, all workspaces
+aerospace list-windows --all --format '%{window-id} %{app-name} %{window-title}'
+
+aerospace close --window-id <ID>                    # ask the app to close it
+kill <PID>                                          # if close is ignored; PID via `aerospace list-windows --format '%{window-id} %{app-pid} %{app-name}'`
+```
+
+If a window has no title and the app-name is unfamiliar, it's almost always the phantom. `aerospace reload-config` does *not* clear them — you have to close or kill.
+
+**Sway (Linux):**
+
+```sh
+swaymsg -t get_tree | jq '.. | select(.type? == "con") | {id, name, app_id, pid, visible}'
+swaymsg -t get_workspaces                            # workspace summary
+swaymsg '[con_id=<ID>] kill'                         # kill the container
+```
+
+For a focused-workspace-only view: `swaymsg -t get_tree | jq '.. | select(.type? == "workspace" and .focused == true)'`.
 
 ### Neovim
 
