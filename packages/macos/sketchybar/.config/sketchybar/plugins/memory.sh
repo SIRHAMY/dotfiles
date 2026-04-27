@@ -12,11 +12,8 @@ COLOR_FG=0xffbcc2cc
 COLOR_WARN=0xffd19a66
 COLOR_CRIT=0xffe06c75
 
-# SF Symbols glyph as raw UTF-8 (bash 3.2 compatible; see battery.sh).
-ICON_MEM=$'\xf4\x80\xab\xa8'  # U+100AE8 memorychip
-
 if ! command -v vm_stat >/dev/null || ! command -v sysctl >/dev/null; then
-  sketchybar --set "$NAME" icon="" label="--"
+  sketchybar --set "$NAME" label="MEM --"
   exit 0
 fi
 
@@ -25,7 +22,7 @@ vmstat_out=$(vm_stat 2>/dev/null)
 ps=$(printf '%s\n' "$vmstat_out" | sed -n 's/.*page size of \([0-9]*\) bytes.*/\1/p')
 
 if [[ -z "$total" || -z "$ps" ]]; then
-  sketchybar --set "$NAME" icon="$ICON_MEM" label="--"
+  sketchybar --set "$NAME" label="MEM --"
   exit 0
 fi
 
@@ -45,8 +42,4 @@ elif (( pct >= 70 )); then color="$COLOR_WARN"
 else                       color="$COLOR_FG"
 fi
 
-sketchybar --set "$NAME" \
-           icon="$ICON_MEM" \
-           icon.color="$color" \
-           label="${pct}%" \
-           label.color="$color"
+sketchybar --set "$NAME" label="MEM ${pct}%" label.color="$color"

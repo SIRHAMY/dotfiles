@@ -12,11 +12,8 @@ COLOR_FG=0xffbcc2cc
 COLOR_WARN=0xffd19a66
 COLOR_CRIT=0xffe06c75
 
-# SF Symbols glyph as raw UTF-8 (bash 3.2 compatible; see battery.sh).
-ICON_CPU=$'\xf4\x80\xab\xa6'  # U+100AE6 cpu
-
 if ! command -v top >/dev/null; then
-  sketchybar --set "$NAME" icon="" label="--"
+  sketchybar --set "$NAME" label="CPU --"
   exit 0
 fi
 
@@ -30,8 +27,4 @@ elif (( pct >= 60 )); then color="$COLOR_WARN"
 else                       color="$COLOR_FG"
 fi
 
-sketchybar --set "$NAME" \
-           icon="$ICON_CPU" \
-           icon.color="$color" \
-           label="${pct}%" \
-           label.color="$color"
+sketchybar --set "$NAME" label="CPU ${pct}%" label.color="$color"

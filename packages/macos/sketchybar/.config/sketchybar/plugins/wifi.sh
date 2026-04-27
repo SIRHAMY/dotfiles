@@ -12,12 +12,8 @@ NAME="${NAME:-wifi}"
 COLOR_FG=0xffbcc2cc
 COLOR_DIM=0xff5e6570
 
-# SF Symbols glyphs as raw UTF-8 (bash 3.2 compatible; see battery.sh).
-ICON_WIFI=$'\xf4\x80\x99\x87'      # U+100647 wifi
-ICON_WIFI_OFF=$'\xf4\x80\x99\xbd'  # U+10067D wifi.slash
-
 if ! command -v networksetup >/dev/null; then
-  sketchybar --set "$NAME" icon="" label="--"
+  sketchybar --set "$NAME" label="WIFI --"
   exit 0
 fi
 
@@ -31,15 +27,7 @@ if [[ -n "$iface" ]]; then
 fi
 
 if [[ -n "$ssid" ]]; then
-  sketchybar --set "$NAME" \
-             icon="$ICON_WIFI" \
-             icon.color="$COLOR_FG" \
-             label="$ssid" \
-             label.color="$COLOR_FG"
+  sketchybar --set "$NAME" label="WIFI $ssid" label.color="$COLOR_FG"
 else
-  sketchybar --set "$NAME" \
-             icon="$ICON_WIFI_OFF" \
-             icon.color="$COLOR_DIM" \
-             label="off" \
-             label.color="$COLOR_DIM"
+  sketchybar --set "$NAME" label="WIFI off"   label.color="$COLOR_DIM"
 fi
