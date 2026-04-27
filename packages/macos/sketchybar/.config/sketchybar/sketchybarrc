@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# SketchyBar config — per-monitor AeroSpace workspace pills, mirrors waybar's
+# `sway/workspaces` with `all-outputs=false`. MVP scope: workspace pills only,
+# right-aligned, one item per (monitor × workspace). Plugin script flips
+# drawing/colors on AeroSpace workspace changes and monitor hotplug.
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+# Palette — lifted from packages/linux/waybar/.config/waybar/style.css
+COLOR_BG=0xff161616        # bar background
+COLOR_FG=0xffbcc2cc        # inactive pill label
+COLOR_ACTIVE=0xff10b981    # focused pill background (waybar green)
+COLOR_ACTIVE_FG=0xff161616 # focused pill label (dark on green)
+
+sketchybar --bar position=top \
+                 height=28 \
+                 color=$COLOR_BG \
+                 padding_left=4 \
+                 padding_right=4 \
+                 display=all
+
+sketchybar --default updates=when_shown \
+                     label.font="SF Pro:Semibold:13.0" \
+                     label.color=$COLOR_FG \
+                     padding_left=2 \
+                     padding_right=2 \
+                     background.corner_radius=4 \
+                     background.height=20 \
+                     background.color=0x00000000
+
+# Pre-declare items for monitors 1..3 × workspaces 1..20. Items pinned to a
+# non-existent display are silently no-op'd by SketchyBar, so over-declaring is
+# safe on single/dual-monitor setups. drawing=off until the plugin enables them.
+for monitor in 1 2 3; do
+  for ws in $(seq 1 20); do
+    sid="space.$monitor.$ws"
+    sketchybar --add item "$sid" right \
+               --set "$sid" \
+                     display="$monitor" \
+                     drawing=off \
+                     label="$ws" \
+                     label.padding_left=8 \
+                     label.padding_right=8 \
+                     click_script="aerospace workspace $ws"
+  done
+done
+
+# Hidden controller item — single subscriber that updates every space.* item in
+# one batched sketchybar invocation. Avoids 60 plugin forks per workspace
+# change.
+sketchybar --add item ws.controller right \
+           --set ws.controller \
+                 drawing=off \
+                 updates=on \
+                 script="$PLUGIN_DIR/aerospace_workspaces.sh" \
+           --subscribe ws.controller aerospace_workspace_change display_change
+
+sketchybar --update
+
+# Initial paint — SketchyBar doesn't fire aerospace_workspace_change on its own
+# at startup, so seed the state directly.
+"$PLUGIN_DIR/aerospace_workspaces.sh"

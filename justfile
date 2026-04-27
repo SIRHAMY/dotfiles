@@ -2,7 +2,7 @@ os := `uname -s`
 
 packages_common := "zsh tmux ghostty zellij nvim yazi git bash bin"
 packages_linux  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
-packages_macos  := "zsh-macos aerospace"
+packages_macos  := "zsh-macos aerospace sketchybar"
 
 # Link everything for the current OS. Pre-flights conflicts (fails loud on any
 # pre-existing non-symlink at a target path), then stows per bucket.
@@ -150,7 +150,10 @@ install-deps:
             echo "Homebrew not found. Install from https://brew.sh" >&2
             exit 1
         fi
-        brew install stow zsh zoxide fzf zellij tmux neovim fd lazygit yazi \
+        # SketchyBar lives in a third-party tap, not core. Tap first so the
+        # `brew install sketchybar` line below resolves.
+        brew tap FelixKratz/formulae
+        brew install stow zsh zoxide fzf zellij tmux neovim fd lazygit yazi sketchybar \
             zsh-autosuggestions zsh-syntax-highlighting
         # Cask installs are guarded for idempotency: brew --cask install errors
         # on already-installed in some versions. AeroSpace is in a third-party
@@ -158,6 +161,9 @@ install-deps:
         # short name still works for the `brew list` idempotency probe.
         brew list --cask ghostty &>/dev/null || brew install --cask ghostty
         brew list --cask aerospace &>/dev/null || brew install --cask nikitabobko/tap/aerospace
+        # Autostart sketchybar at login. Idempotent — `brew services start` is a
+        # no-op if it's already running.
+        brew services start sketchybar
     else
         echo "Unsupported OS: {{os}}" >&2
         exit 1

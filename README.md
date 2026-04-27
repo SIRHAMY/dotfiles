@@ -119,7 +119,8 @@ After `just setup` finishes, three manual one-time steps:
 
 1. **Caps Lock → Escape.** System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys → set Caps Lock to Escape. Mac handles this natively; no Karabiner needed.
 2. **AeroSpace Accessibility permission.** Launch AeroSpace (`open -a AeroSpace`). When prompted, grant Accessibility permission in System Settings → Privacy & Security → Accessibility. Then `aerospace reload-config`.
-3. **brew shellenv handled automatically.** `packages/macos/zsh-macos/.config/zsh/.zshenv` evals `brew shellenv` on every zsh invocation (login or not), so new tmux/zellij panes get `$HOMEBREW_PREFIX` and brew binaries on `PATH` without `.zprofile`-only weirdness.
+3. **Hide the macOS menu bar (so SketchyBar can own the top strip).** System Settings → Control Center → "Automatically hide and show the menu bar" → set to **Always**. Otherwise SketchyBar's bar and the macOS menu bar stack on top of each other. Hiding the menu bar also hides the AeroSpace menu-extra workspace indicator, which is the intended outcome — SketchyBar replaces it.
+4. **brew shellenv handled automatically.** `packages/macos/zsh-macos/.config/zsh/.zshenv` evals `brew shellenv` on every zsh invocation (login or not), so new tmux/zellij panes get `$HOMEBREW_PREFIX` and brew binaries on `PATH` without `.zprofile`-only weirdness.
 
 **MDM fallback (managed work Mac).** If brew or cask installs are blocked by MDM, you can still stow the common configs by hand, skipping `install-deps`:
 
@@ -128,6 +129,8 @@ stow --no-folding -d packages/common -t ~ $(ls packages/common)
 ```
 
 You will be missing the brew formulae (zsh plugins, fzf, etc.) and the casks (Ghostty, AeroSpace), but the configs themselves will link. File a ticket with IT for the missing pieces.
+
+If SketchyBar specifically is blocked (tap install denied), skip step 3 above and leave the macOS menu bar visible — AeroSpace's built-in menu-extra workspace indicator is the fallback. The `exec-on-workspace-change` hook in `aerospace.toml` is guarded with `command -v sketchybar`, so AeroSpace itself stays healthy without it.
 
 ## 9. Post-merge Mac validation workflow
 
@@ -219,6 +222,19 @@ Mirrors the sway shape with `Alt` replacing `Super`. From `packages/macos/aerosp
 | Fullscreen | `Alt+f` |
 
 Launcher and terminal-spawn binds are deliberately unset on Mac — use Spotlight (`Cmd+Space`) or Raycast until day-1 experience tells us what to bind.
+
+### SketchyBar (macOS)
+
+Per-monitor workspace pills, mirroring waybar's `sway/workspaces` with `all-outputs=false`. Each monitor's bar shows only its own non-empty workspaces; the focused workspace gets the green highlight. Config at `packages/macos/sketchybar/.config/sketchybar/`.
+
+| Action | How |
+|--------|-----|
+| Click a pill | Switches to that workspace (calls `aerospace workspace N`) |
+| Reload after editing config | `brew services restart sketchybar` or `sketchybar --reload` |
+| Debug (see plugin stderr) | `pkill sketchybar && sketchybar` (foreground) |
+| Inspect runtime state | `sketchybar --query bar` / `sketchybar --query space.1.1` |
+
+Pills update on every `aerospace_workspace_change` (wired via `exec-on-workspace-change` in `aerospace.toml`) and on monitor hotplug (`display_change`).
 
 ### Zellij
 

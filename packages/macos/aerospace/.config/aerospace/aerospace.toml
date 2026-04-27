@@ -5,6 +5,13 @@ start-at-login = true
 
 enable-normalization-flatten-containers = true
 
+# Notify SketchyBar so the workspace pills refresh. `command -v` guards the Mac
+# without sketchybar installed (e.g. MDM-blocked) — AeroSpace shouldn't error
+# on every workspace switch in that case.
+exec-on-workspace-change = ['/bin/bash', '-c',
+    'command -v sketchybar >/dev/null && sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE || true'
+]
+
 accordion-padding = 30
 default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
