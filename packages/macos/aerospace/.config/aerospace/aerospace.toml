@@ -81,3 +81,9 @@ alt-ctrl-0 = 'move-node-to-workspace 10'
 alt-shift-q = 'close'
 alt-shift-c = 'reload-config'
 alt-f       = 'fullscreen'
+
+# Reset layout: flatten any nested containers (left over after closing windows
+# or interactive resizes) and equalize sibling sizes. AeroSpace has no
+# on-window-close hook, so weights from a prior 3-window split persist after
+# closing one — this is the manual rebalance.
+alt-shift-r = ['flatten-workspace-tree', 'balance-sizes']
