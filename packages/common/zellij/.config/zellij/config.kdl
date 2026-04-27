@@ -2,9 +2,6 @@
 // Press Ctrl+g to unlock and access zellij bindings.
 default_mode "locked"
 
-// Wayland clipboard integration (sway)
-copy_command "wl-copy"
-
 // Match tmux scrollback (default is 10000)
 scroll_buffer_size 50000
 
