@@ -18,11 +18,17 @@ alt-j = 'focus down'
 alt-k = 'focus up'
 alt-l = 'focus right'
 
-# Move container
-alt-shift-h = 'move left'
-alt-shift-j = 'move down'
-alt-shift-k = 'move up'
-alt-shift-l = 'move right'
+# Move focused container directionally (mirrors sway $mod+Ctrl+h/j/k/l)
+alt-ctrl-h = 'move left'
+alt-ctrl-j = 'move down'
+alt-ctrl-k = 'move up'
+alt-ctrl-l = 'move right'
+
+# Move workspace to prev/next monitor (mirrors sway $mod+Shift+h/l)
+# AeroSpace orders monitors left-to-right; j/k (down/up) skipped — no
+# vertical-monitor support in move-workspace-to-monitor.
+alt-shift-h = 'move-workspace-to-monitor --wrap-around prev'
+alt-shift-l = 'move-workspace-to-monitor --wrap-around next'
 
 # Workspaces 1-10 (alt-0 = workspace 10; mirrors sway $mod+0)
 alt-1 = 'workspace 1'
