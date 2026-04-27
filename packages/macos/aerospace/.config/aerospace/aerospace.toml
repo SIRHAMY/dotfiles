@@ -24,11 +24,14 @@ automatically-unhide-macos-hidden-apps = false
 outer.top = 28
 
 [mode.main.binding]
-# Directional focus
-alt-h = 'focus left'
-alt-j = 'focus down'
-alt-k = 'focus up'
-alt-l = 'focus right'
+# Directional focus. Uses cmd-alt instead of plain alt to avoid colliding
+# with zellij's Alt+hjkl pane/tab navigation — terminal multiplexer wins
+# the bare-alt chord on Mac, mirroring how sway uses Super (not Alt) for
+# window focus.
+cmd-alt-h = 'focus left'
+cmd-alt-j = 'focus down'
+cmd-alt-k = 'focus up'
+cmd-alt-l = 'focus right'
 
 # Move focused container directionally (mirrors sway $mod+Ctrl+h/j/k/l)
 alt-ctrl-h = 'move left'

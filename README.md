@@ -213,7 +213,7 @@ Mirrors the sway shape with `Alt` replacing `Super`. From `packages/macos/aerosp
 
 | Action | Keys |
 |--------|------|
-| Focus left/down/up/right | `Alt+h/j/k/l` |
+| Focus left/down/up/right | `Cmd+Alt+h/j/k/l` |
 | Move container left/down/up/right | `Alt+Ctrl+h/j/k/l` |
 | Move workspace to prev/next monitor | `Alt+Shift+h` / `Alt+Shift+l` |
 | Switch to workspace 1-10 | `Alt+1-0` |
