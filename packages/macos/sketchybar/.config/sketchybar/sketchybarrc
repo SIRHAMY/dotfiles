@@ -36,12 +36,12 @@ sketchybar --default updates=when_shown \
 # over-declaring is safe on single/dual-monitor setups. drawing=off until the
 # plugin enables them.
 #
-# Center-aligned: items render left-to-right in declaration order, so iterate
-# ascending 1..20 to read 1,2,3...
+# Left-aligned (the MacBook notch covers center on built-in displays). Items
+# render left-to-right in declaration order, so iterate ascending 1..20.
 for monitor in 1 2 3; do
   for ws in $(seq 1 20); do
     sid="space.$monitor.$ws"
-    sketchybar --add item "$sid" center \
+    sketchybar --add item "$sid" left \
                --set "$sid" \
                      display="$monitor" \
                      drawing=off \
