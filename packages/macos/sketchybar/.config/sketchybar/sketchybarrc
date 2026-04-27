@@ -45,6 +45,11 @@ for monitor in 1 2 3; do
   done
 done
 
+# Custom events must be registered before items can subscribe. `display_change`
+# is built-in; `aerospace_workspace_change` is what aerospace.toml's
+# `exec-on-workspace-change` triggers.
+sketchybar --add event aerospace_workspace_change
+
 # Hidden controller item — single subscriber that updates every space.* item in
 # one batched sketchybar invocation. Avoids 60 plugin forks per workspace
 # change.
