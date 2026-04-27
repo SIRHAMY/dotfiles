@@ -436,6 +436,11 @@ Post-merge (Mac validation, day 1 of new job) — out of scope for this SPEC; tr
 
 | Phase | Status | Commit | Notes |
 |-------|--------|--------|-------|
+| 1 | completed (live-machine verification deferred to user migration) | `69cddce` | git mv all packages, justfile rewrite to bucket dispatch; check-conflicts recipe lands. Symlink audit shows pre-migration dangling state — expected. |
+| 2 | completed (live-machine verification deferred to user migration) | `b45ca2a` | ZDOTDIR + conf.d loader; common snippets + zsh-linux. Discovered `--no-folding` is required for cross-bucket sharing of `~/.config/zsh/`; justfile updated. |
+| 3 | completed (live-machine verification deferred to user restow) | `6995fd9` | bin/ split (sway-coupled scripts → bin-linux); tmux loader stub appended to legacy `~/.tmux.conf`. Path deviation from DESIGN's literal `~/.config/tmux/os.<key>.conf` documented in followups. |
+| 4 | completed | `115c04b` | macOS scaffolding done; cross-OS `stow -n` (and real stow) verified zero conflicts from Fedora. aerospace.toml TOML-parsed; zsh-macos `zsh -n` clean. |
+| 5 | completed | `9efa88a` | README rewrite covers all 14 sections; AeroSpace cheatsheet 1:1 with aerospace.toml; commands/paths verified against repo. |
 
 ## Followups Summary
 
@@ -443,11 +448,26 @@ Post-merge (Mac validation, day 1 of new job) — out of scope for this SPEC; tr
 
 ### Critical
 
+(none)
+
 ### High
+
+(none)
 
 ### Medium
 
+- **DESIGN.md update — `--no-folding` requirement for cross-bucket shared dirs** (P2). TECH_RESEARCH Q1 implied `.gitkeep` alone would suffice for cross-bucket sharing of `~/.config/zsh/`, but `stow -d packages/<bucket>` invocations don't share folding state — the second bucket fails with "existing target is not owned by stow". Resolved in code by adding `--no-folding` to `_stow-bucket`/`_stow-bucket-flag`/`_plan-bucket` in justfile and documenting in README §6/§13. Worth a DESIGN.md amendment so future readers don't relitigate the `.gitkeep`-only path.
+- **PRD divergence — `packages/macos/bin-macos` empty package not created** (review). PRD Must-Have called for `packages/macos/bin-macos` as an empty stow package with `.gitkeep`. SPEC explicitly excluded empty placeholder packages per DESIGN ("create them only when first OS-specific content lands"). The decision is documented and defensible (consistent with skipping `tmux-macos`, `tmux-linux`, `ghostty-{linux,macos}`), but it does deviate from the PRD checklist as written. Either update PRD-as-built or add the empty package.
+- **Live-machine Fedora verification deferred to user migration** (review). All Phases 1–3 have user-run verification items still unchecked (re-stow, prompt renders, plugins load, sway reloads, tmux/nvim/yazi open, fzf bindings work). Implementation work is complete; the deferred items are real, scheduled migration steps the user runs once. Not a defect — but the PRD pre-merge gate's "no regressions" claim is contingent on the user successfully completing the migration before merging to `main`.
+
 ### Low
+
+- **`check-conflicts` permissively passes relative-target symlinks** (P1). Symlinks whose target doesn't start with `./` or `../` (e.g. `Code/dotfiles/...`) fall into the empty `*) : ;;` branch. Acceptable per DESIGN (only flag absolute foreign symlinks and non-symlinks); worth tightening if drift becomes a concern.
+- **`check-conflicts` heredoc indentation cosmetic** (P1). The just dedent applies uniformly to recipe body including heredoc content; remediation message readable but not pixel-perfect. Could swap to `echo >&2` calls if formatting matters.
+- **`[ -n "{{packages_macos}}" ]` guard added to macOS dispatch lines** (P1). Small enhancement over literal DESIGN — prevents stow invocation with empty pkg list during Phase 1's `packages_macos := ""` state. Phase 4 populates the list; guard becomes a no-op then. Harmless belt-and-suspenders; document in DESIGN if formalizing.
+- **tmux loader path deviation from DESIGN** (P3). Stub uses `~/.tmux.os.linux.conf` / `~/.tmux.os.darwin.conf` (sibling of legacy `~/.tmux.conf`), not DESIGN's literal `~/.config/tmux/os.<key>.conf`. Reason: package ships `.tmux.conf` legacy non-XDG layout. Future tmux→XDG migration would update both main file and include paths together.
+- **`if-shell` quoting style mismatch** (P3). Appended stubs use single-outer + double-inner to defer `$(uname -s)` evaluation to `if-shell`'s spawned `/bin/sh`; existing lines 49–50 use the inverted style for simpler probes. Both correct; flagged for future readers wondering why two styles coexist.
+- **Should-Have: ghostty `conf.d`-style scaffolding not done** (review). PRD Should-Have called for preemptive `conf.d` scaffolding in ghostty for future brew-vs-Linux divergence. SPEC excluded it consistent with the no-empty-placeholders principle. Land when first OS-specific ghostty config arrives.
 
 ## Design Details
 
