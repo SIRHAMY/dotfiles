@@ -2,7 +2,7 @@ os := `uname -s`
 
 packages_common := "zsh tmux ghostty zellij nvim yazi git bash bin"
 packages_linux  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
-packages_macos  := ""
+packages_macos  := "zsh-macos aerospace"
 
 # Link everything for the current OS. Pre-flights conflicts (fails loud on any
 # pre-existing non-symlink at a target path), then stows per bucket.
@@ -146,8 +146,17 @@ install-deps:
         just install-resvg
         just install-flatpaks
     elif [ "{{os}}" = "Darwin" ]; then
-        echo "macOS install-deps not yet implemented" >&2
-        exit 1
+        if ! command -v brew >/dev/null; then
+            echo "Homebrew not found. Install from https://brew.sh" >&2
+            exit 1
+        fi
+        brew install stow zsh zoxide fzf zellij tmux neovim fd lazygit yazi \
+            zsh-autosuggestions zsh-syntax-highlighting
+        # Cask installs are guarded for idempotency: brew --cask install errors
+        # on already-installed in some versions.
+        for cask in ghostty aerospace; do
+            brew list --cask "$cask" &>/dev/null || brew install --cask "$cask"
+        done
     else
         echo "Unsupported OS: {{os}}" >&2
         exit 1

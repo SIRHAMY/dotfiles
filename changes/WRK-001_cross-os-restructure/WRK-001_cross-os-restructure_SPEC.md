@@ -275,7 +275,7 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 > Create the `zsh-macos` package (with brew shellenv bootstrap), the `aerospace` package, and the macOS branch of `install-deps`. Verified via `stow -n` from Fedora.
 
-**Phase Status:** not_started
+**Phase Status:** completed
 
 **Complexity:** Med
 
@@ -300,10 +300,10 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 **Tasks:**
 
-- [ ] Create the four new files under `packages/macos/`.
-- [ ] Set `packages_macos := "zsh-macos aerospace"` in `justfile`.
-- [ ] Replace the macOS branch of `install-deps` with the real brew + cask logic.
-- [ ] Run the cross-OS dry-run from Fedora — uses a scratch target dir to validate the macOS layout without actually stowing on the wrong machine:
+- [x] Create the four new files under `packages/macos/`.
+- [x] Set `packages_macos := "zsh-macos aerospace"` in `justfile`.
+- [x] Replace the macOS branch of `install-deps` with the real brew + cask logic.
+- [x] Run the cross-OS dry-run from Fedora — uses a scratch target dir to validate the macOS layout without actually stowing on the wrong machine:
   ```sh
   scratch=$(mktemp -d)
   for pkg in zsh-macos aerospace; do
@@ -314,19 +314,19 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
   stow -n -v -d packages/macos -t "$scratch" zsh-macos
   rm -rf "$scratch"
   ```
-  Output must show zero conflicts.
-- [ ] Validate `aerospace.toml` syntax by attempting a TOML parse (any TOML-capable tool: `python3 -c 'import tomllib; tomllib.load(open("packages/macos/aerospace/.config/aerospace/aerospace.toml","rb"))'` or similar). This catches typos before they hit the Mac.
-- [ ] Validate the `.zshenv` and `os.darwin/*.zsh` files with `zsh -n` for syntax correctness (parsing only; brew won't actually exist on Fedora, but syntax is portable).
-- [ ] Confirm `find packages/macos -type f` lists exactly the four content files (plus any `.gitkeep`s) — no stray placeholders.
+  Output must show zero conflicts. (Verified — also did a real (non-dry-run) stow of common/zsh + macos/zsh-macos + macos/aerospace into a scratch dir; resulting tree had `~/.zshenv` (common), `~/.config/zsh/.zshenv` (zsh-macos), `~/.config/zsh/.zshrc` (common), `~/.config/zsh/conf.d/*.zsh` (common), `~/.config/zsh/conf.d/os.darwin/*.zsh` (zsh-macos), and `~/.config/aerospace/aerospace.toml` (aerospace) — zero conflicts.)
+- [x] Validate `aerospace.toml` syntax by attempting a TOML parse — `python3 -c 'import tomllib; tomllib.load(...)'` exited 0.
+- [x] Validate the `.zshenv` and `os.darwin/*.zsh` files with `zsh -n` for syntax correctness — all three files parse clean.
+- [x] Confirm `find packages/macos -type f` lists exactly the four content files (plus the Phase 1 `.gitkeep` at `packages/macos/.gitkeep`) — no stray placeholders. Output: `aerospace/.config/aerospace/aerospace.toml`, `.gitkeep`, `zsh-macos/.config/zsh/conf.d/os.darwin/{10-brew.zsh,20-aliases.zsh}`, `zsh-macos/.config/zsh/.zshenv`.
 
 **Verification:**
 
-- [ ] `stow -n -v -d packages/macos -t <scratch>` for each package reports zero conflicts.
-- [ ] `stow -n -v -d packages/common ...` followed by `stow -n -v -d packages/macos ...` against the same scratch target reports zero conflicts (validates the `.gitkeep` directory-guard story for cross-bucket sharing of `~/.config/zsh/conf.d/`).
-- [ ] `aerospace.toml` parses as valid TOML.
-- [ ] `zsh -n` clean on every Mac zsh file.
-- [ ] No regressions on Fedora — these files are not stowed when `os == "Linux"`.
-- [ ] Code review passes.
+- [x] `stow -n -v --no-folding -d packages/macos -t <scratch>` for each package reports zero conflicts (verified for `zsh-macos` and `aerospace`).
+- [x] `stow -n -v --no-folding -d packages/common ...` followed by `stow -n -v --no-folding -d packages/macos ...` against the same scratch target reports zero conflicts. Cross-bucket sharing works because common/zsh owns `~/.zshenv` + `~/.config/zsh/.zshrc` + `~/.config/zsh/conf.d/*.zsh` + `.gitkeep`s, while zsh-macos owns `~/.config/zsh/.zshenv` (the second-stage zsh init file, separate from common's `~/.zshenv`) plus `~/.config/zsh/conf.d/os.darwin/*.zsh`. No path collisions.
+- [x] `aerospace.toml` parses as valid TOML (Python `tomllib`).
+- [x] `zsh -n` clean on every Mac zsh file (`.zshenv`, `10-brew.zsh`, `20-aliases.zsh`).
+- [x] No regressions on Fedora — these files are not stowed when `os == "Linux"`. Verified: `find packages/linux/zsh-linux -type f` and `find packages/linux/bin-linux -type f` show identical content to Phase 2/3 results (3 zsh-linux snippets + 4 bin-linux scripts).
+- [x] Code review passes (self-review: aerospace.toml binding-by-binding match against DESIGN; zsh-macos snippets follow loader contract — no top-level `case $OSTYPE`, all OS-specific content under `conf.d/os.darwin/`; install-deps macOS branch fails loud on missing brew with brew.sh link, brew formulae verbatim from spec, cask loop is idempotent via `brew list --cask` guard; justfile `[ "{{os}}" = "Darwin" ]` branches in `all`/`unstow-all`/`restow`/`plan`/`check-conflicts` all reference `packages_macos`).
 
 **Commit:** `[WRK-001][P4] Feature: Add macOS packages (zsh-macos, aerospace) and install-deps`
 
