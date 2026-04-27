@@ -31,8 +31,12 @@ sketchybar --default updates=when_shown \
 # Pre-declare items for monitors 1..3 × workspaces 1..20. Items pinned to a
 # non-existent display are silently no-op'd by SketchyBar, so over-declaring is
 # safe on single/dual-monitor setups. drawing=off until the plugin enables them.
+#
+# Reverse iteration (20 -> 1): right-aligned items grow leftward from the
+# right edge, so the first item added is rightmost. We want ascending order
+# reading left-to-right, so add the highest workspace first.
 for monitor in 1 2 3; do
-  for ws in $(seq 1 20); do
+  for ws in $(seq 20 -1 1); do
     sid="space.$monitor.$ws"
     sketchybar --add item "$sid" right \
                --set "$sid" \
