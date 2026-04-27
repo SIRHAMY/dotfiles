@@ -214,7 +214,7 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 > Split `bin/` so sway-coupled scripts move to `packages/linux/bin-linux/`. Append the `if-shell ... source-file -q` stubs to common `tmux.conf`.
 
-**Phase Status:** not_started
+**Phase Status:** completed (live-machine verification deferred to user restow)
 
 **Complexity:** Low
 
@@ -236,22 +236,24 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 
 **Tasks:**
 
-- [ ] `git mv` the four sway-coupled scripts from `packages/common/bin/.local/bin/` to `packages/linux/bin-linux/.local/bin/` (create the target directory tree first).
-- [ ] Update the `setup-sway-session` recipe in `justfile`: replace `bin/.local/bin/sway-launch` with `packages/linux/bin-linux/.local/bin/sway-launch`.
-- [ ] Append the two `if-shell` lines to `packages/common/tmux/.config/tmux/tmux.conf` (per DESIGN, end of file).
-- [ ] Add `bin-linux` to `packages_linux` in `justfile`.
-- [ ] Verify `packages/common/bin/.local/bin/.gitkeep` is still present (it survived Phase 1 — sanity check).
-- [ ] `just restow` to pick up the changes.
-- [ ] Confirm `which sway-launch` resolves to `~/.local/bin/sway-launch` and the symlink chases into `packages/linux/bin-linux/.local/bin/sway-launch`.
-- [ ] `tmux source ~/.config/tmux/tmux.conf` from inside a tmux session — must reload without error (the `source-file -q` lines silently no-op since `os.linux.conf` doesn't exist).
+- [x] `git mv` the four sway-coupled scripts from `packages/common/bin/.local/bin/` to `packages/linux/bin-linux/.local/bin/` (create the target directory tree first).
+- [x] Update the `setup-sway-session` recipe in `justfile`: replace `bin/.local/bin/sway-launch` with `packages/linux/bin-linux/.local/bin/sway-launch`.
+- [x] Append the two `if-shell` lines to the actual `packages/common/tmux/.tmux.conf` (legacy layout — file lives at `~/.tmux.conf`, not `~/.config/tmux/`). OS-specific files target `~/.tmux.os.linux.conf` and `~/.tmux.os.darwin.conf` (beside the existing tmux.conf). Path-deviation from DESIGN's literal `~/.config/tmux/os.<key>.conf` example noted in Followups.
+- [x] Add `bin-linux` to `packages_linux` in `justfile` (preserved `zsh-linux` from Phase 2).
+- [x] Verify `packages/common/bin/.local/bin/.gitkeep` is still present (confirmed: file is intact at 40 bytes with the dir-guard comment).
+- [ ] (deferred: user runs after migration) `just restow` to pick up the changes.
+- [ ] (deferred: user runs after migration) Confirm `which sway-launch` resolves to `~/.local/bin/sway-launch` and the symlink chases into `packages/linux/bin-linux/.local/bin/sway-launch`.
+- [ ] (deferred: user runs against live tmux server) `tmux source ~/.tmux.conf` from inside a tmux session — must reload without error (the `source-file -q` lines silently no-op since `~/.tmux.os.linux.conf` doesn't exist).
 
 **Verification:**
 
-- [ ] All four scripts still on `$PATH` and invocable on Fedora (`which sway-launch obsidian-scratchpad scratchpad-toggle zellij-sessionizer`).
-- [ ] Sway sessionizer keybind still works — invoke whatever the existing sway bind is (e.g. Super+P) and confirm it launches the sessionizer floating window.
-- [ ] `tmux kill-server && tmux` opens cleanly with no errors.
-- [ ] `stow -n` on common/bin + linux/bin-linux reports zero conflicts.
-- [ ] Code review passes.
+- [ ] (deferred: user runs after restow) All four scripts still on `$PATH` and invocable on Fedora (`which sway-launch obsidian-scratchpad scratchpad-toggle zellij-sessionizer`).
+- [ ] (deferred: user runs interactive sway) Sway sessionizer keybind still works — invoke whatever the existing sway bind is (e.g. Super+P) and confirm it launches the sessionizer floating window.
+- [x] tmux config parses cleanly: `tmux -f packages/common/tmux/.tmux.conf -L wrk001-test start-server \; kill-server` exits 0 (no parse errors on the appended `if-shell` lines).
+- [x] `stow -n --no-folding` on common (`bin tmux`) + linux (`bin-linux`) against scratch target reports zero conflicts both individually and combined.
+- [x] No orphaned references to the old `bin/.local/bin/sway-launch` path linger anywhere — `grep -rn "bin/.local/bin/sway-launch" .` (excluding `.git`) returns only 4 matches in `changes/WRK-001_cross-os-restructure/WRK-001_cross-os-restructure_SPEC.md` (which are the SPEC's own historical/instructional references and intentional).
+- [x] Staged renames detected at 100% similarity: `git diff --cached --stat -M --find-renames` shows 4 renamed files with 0 insertions/deletions; `git log --follow` will trace pre-move history once committed.
+- [x] Code review passes (self-review covered tmux.conf append doesn't break existing config; `if-shell` quoting style explained in summary; justfile diff is minimal/surgical; no orphaned references to old paths).
 
 **Commit:** `[WRK-001][P3] Feature: Split bin/ into common+linux; scaffold tmux OS loader`
 
@@ -263,6 +265,9 @@ Each phase ends with a single commit on the restructure branch. The Fedora migra
 **Followups:**
 
 <!-- Items discovered during this phase that should be addressed but aren't blocking -->
+
+- [ ] [Low] Path deviation from DESIGN: tmux loader stub uses `~/.tmux.os.linux.conf` / `~/.tmux.os.darwin.conf` (sibling of the existing `~/.tmux.conf`), not DESIGN's literal `~/.config/tmux/os.<key>.conf`. Reason: the actual common tmux package ships `packages/common/tmux/.tmux.conf` (legacy non-XDG layout the user already has on disk), so OS-specific includes are placed beside it for consistency. A future tmux→XDG migration would update both the main file and these include paths together.
+- [ ] [Low] `if-shell` quoting in the appended stubs uses single-quoted outer + double-quoted inner to prevent zsh/bash command substitution of `$(uname -s ...)` at config-load time (the test must run inside `if-shell`'s spawned `/bin/sh`). The existing lines 49-50 use double-quoted outer + single-quoted inner, but their probes are simpler (no `$()` inside the test). The two styles serve different needs; both are correct.
 
 ---
 

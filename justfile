@@ -1,7 +1,7 @@
 os := `uname -s`
 
 packages_common := "zsh tmux ghostty zellij nvim yazi git bash bin"
-packages_linux  := "zsh-linux sway swaylock waybar mako wofi fontconfig environment.d"
+packages_linux  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
 packages_macos  := ""
 
 # Link everything for the current OS. Pre-flights conflicts (fails loud on any
@@ -233,7 +233,7 @@ setup-sway-session:
     set -euo pipefail
 
     # Install sway-launch to a system-wide path so the display manager can find it
-    sudo install -m 755 packages/common/bin/.local/bin/sway-launch /usr/local/bin/sway-launch
+    sudo install -m 755 packages/linux/bin-linux/.local/bin/sway-launch /usr/local/bin/sway-launch
     echo "Installed /usr/local/bin/sway-launch"
 
     # Add a login session entry that uses sway-launch
