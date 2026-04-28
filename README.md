@@ -327,6 +327,60 @@ DOTFILES_PROFILE=linux-remote just setup        # env var
 
 Before invoking `just setup`, `bootstrap.sh` runs `check-conflicts` and **auto-backs-up** any pre-existing files that would collide with stow (e.g., the `~/.bashrc` / `~/.zshenv` that base images often ship). Originals move to `*.pre-stow.<timestamp>.bak`; nothing is deleted. This makes the unattended path on remote dev envs work out of the box. If you need to disable this, run `just setup` directly instead of `./bootstrap.sh`.
 
+### AI dotfiles
+
+`linux-remote` also runs `just setup-ai-dotfiles` after the base CLI setup. It clones or updates the private AI config repo, then runs that repo's `just link` so Claude config is sourced from Git instead of copied by hand.
+
+Defaults:
+
+```sh
+AI_DOTFILES_REPO=git@github.com:SIRHAMY/ai-dotfiles.git
+AI_DOTFILES_DIR=$HOME/Code/ai-dotfiles
+```
+
+If the checkout exists and is clean, setup runs `git pull --ff-only`. If it has local changes, setup skips the pull and links the current checkout so local work is not overwritten. Useful overrides:
+
+```sh
+AI_DOTFILES_SKIP_UPDATE=1      # link current checkout without pulling
+DOTFILES_SKIP_AI_DOTFILES=1    # skip AI dotfiles entirely
+```
+
+### EFS runtime state
+
+`linux-remote` also runs `just setup-efs-state`. This is optional: if `EFS_MOUNT_POINT` is unset, missing, or not mounted, setup keeps using local runtime state and continues.
+
+Recommended Ona secret:
+
+```sh
+EFS_MOUNT_POINT=/home/vscode/.efs
+```
+
+The script stores mutable state under `$EFS_MOUNT_POINT/state` and symlinks only selected runtime paths:
+
+```text
+~/.claude.json       -> $EFS_MOUNT_POINT/state/claude/.claude.json
+~/.claude/projects  -> $EFS_MOUNT_POINT/state/claude/projects
+~/.claude/todos     -> $EFS_MOUNT_POINT/state/claude/todos
+~/.codex/config.toml -> $EFS_MOUNT_POINT/state/codex/config.toml
+~/.codex/history.jsonl -> $EFS_MOUNT_POINT/state/codex/history.jsonl
+~/.codex/memories   -> $EFS_MOUNT_POINT/state/codex/memories
+~/.codex/rules      -> $EFS_MOUNT_POINT/state/codex/rules
+~/.codex/sessions   -> $EFS_MOUNT_POINT/state/codex/sessions
+~/.zsh_history      -> $EFS_MOUNT_POINT/state/shell/zsh_history
+```
+
+Claude config that belongs in Git stays managed by `ai-dotfiles` (`~/.claude/CLAUDE.md`, `~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`). EFS is only for runtime state such as `/vim` mode, old Claude sessions, todos, and shell history.
+
+Codex follows the same rule: config, rules, memories, prompt history, and old sessions are shared; auth tokens, caches, logs, plugin caches, and SQLite runtime databases stay local to each machine. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
+
+Useful overrides:
+
+```sh
+DOTFILES_EFS_STATE_ROOT=/some/efs/path/state
+DOTFILES_SKIP_EFS_STATE=1
+DOTFILES_EFS_ALLOW_UNMOUNTED=1    # local testing only
+```
+
 ### Ona helpers
 
 The zsh config ships two laptop-side helpers for Ona environments:
