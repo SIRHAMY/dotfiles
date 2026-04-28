@@ -1,0 +1,13 @@
+# Remote dev images often keep bash as the login shell. For interactive TTY
+# sessions, hand off to zsh without requiring chsh to work in the environment.
+if [[ $- == *i* ]] &&
+    [ -z "${DOTFILES_KEEP_BASH:-}" ] &&
+    [ -z "${ZSH_VERSION:-}" ] &&
+    [ -z "${BASH_EXECUTION_STRING:-}" ] &&
+    [ -t 0 ] &&
+    [ -t 1 ] &&
+    command -v zsh >/dev/null 2>&1; then
+    _dotfiles_zsh_path="$(command -v zsh)"
+    export SHELL="$_dotfiles_zsh_path"
+    exec "$_dotfiles_zsh_path"
+fi

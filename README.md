@@ -327,6 +327,16 @@ DOTFILES_PROFILE=linux-remote just setup        # env var
 
 Before invoking `just setup`, `bootstrap.sh` runs `check-conflicts` and **auto-backs-up** any pre-existing files that would collide with stow (e.g., the `~/.bashrc` / `~/.zshenv` that base images often ship). Originals move to `*.pre-stow.<timestamp>.bak`; nothing is deleted. This makes the unattended path on remote dev envs work out of the box. If you need to disable this, run `just setup` directly instead of `./bootstrap.sh`.
 
+### Remote shell default
+
+`linux-remote` does not run `chsh`. Remote dev images often keep `/etc/passwd` or login-shell changes outside user control, so the profile instead stows a small `~/.bashrc.d/90-exec-zsh` shim. For interactive TTY bash sessions, it exports `SHELL` to the resolved zsh path and `exec`s zsh. Noninteractive `bash -c` commands are left alone.
+
+Use this when you need to stay in bash:
+
+```sh
+DOTFILES_KEEP_BASH=1 bash
+```
+
 ### AI dotfiles
 
 `linux-remote` also runs `just setup-ai-dotfiles` after the base CLI setup. It clones or updates the private AI config repo, then runs that repo's `just link` so Claude config and cross-harness skills are sourced from Git instead of copied by hand.
@@ -424,6 +434,8 @@ ona-up <repo-url|project-id>       # create an environment, then run ona-ssh
 zellij -l dev attach main -c
 ```
 
+For zellij and tmux modes, `ona-ssh` exports remote `SHELL` to zsh when zsh exists before launching the multiplexer, so newly-created panes follow the zsh default even if Ona's login shell is still bash.
+
 Useful overrides:
 
 ```sh
@@ -448,7 +460,7 @@ So an env-var leak is visible immediately, not silent.
 
 ### What `linux-remote` includes
 
-Stowed: `zsh` (+ plugins via OS package manager), `tmux`, `zellij`, `nvim` (+ LazyVim), `yazi`, `git`, `bash`, `bin`, plus the `zsh-linux` conf.d bucket (cargo/opencode PATH guards, plugin source paths — both valid on Debian/Ubuntu and Fedora).
+Stowed: `zsh` (+ plugins via OS package manager), `tmux`, `zellij`, `nvim` (+ LazyVim), `yazi`, `git`, `bash`, `bin`, plus the `zsh-linux` conf.d bucket (cargo/opencode PATH guards, plugin source paths — both valid on Debian/Ubuntu and Fedora) and the `bash-remote` shim that hands interactive bash TTY sessions to zsh.
 
 ### What `linux-remote` skips
 

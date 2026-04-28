@@ -6,7 +6,7 @@ os := `uname -s`
 packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin ssh"
 packages_common_workstation := "ghostty"
 packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
-packages_linux_remote       := "zsh-linux"
+packages_linux_remote       := "zsh-linux bash-remote"
 packages_macos_workstation  := "zsh-macos aerospace sketchybar"
 
 # Link everything for the resolved profile. Pre-flights conflicts (fails loud
