@@ -3,7 +3,7 @@ os := `uname -s`
 # Profile-aware package classification (WRK-002). Profile-aware recipes
 # (`setup`, `all`, `check-conflicts`, `unstow-all`, `restow`, `plan`) all
 # resolve a profile via `_profile-context` and pick from these vars.
-packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin"
+packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin ssh"
 packages_common_workstation := "ghostty"
 packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
 packages_linux_remote       := "zsh-linux"
