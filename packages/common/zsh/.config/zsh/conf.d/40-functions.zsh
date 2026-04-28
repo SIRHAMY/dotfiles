@@ -26,3 +26,146 @@ zp() {
 
   cd "${project_paths[$name]}" && zellij -l dev attach "$name" -c
 }
+
+_ona_require_commands() {
+  local missing=()
+  local cmd
+  for cmd in "$@"; do
+    command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
+  done
+  if (( ${#missing[@]} )); then
+    print -u2 "ona-ssh: missing command(s): ${missing[*]}"
+    return 127
+  fi
+}
+
+_ona_pick_running_env() {
+  local json rows env_id
+
+  json=$(ona environment list --running-only --format json) || return
+  rows=$(
+    printf '%s\n' "$json" | jq -r '
+      def parse_time:
+        if . == null or . == "" then null
+        else sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601
+        end;
+      def age:
+        parse_time as $t |
+        if $t == null then "-"
+        else ((now - $t) / 3600 | floor) as $h |
+          if $h < 24 then "\($h)h" else "\(($h / 24) | floor)d" end
+        end;
+      def active:
+        parse_time as $t |
+        if $t == null then "-"
+        else ((now - $t) / 60 | floor) as $m |
+          if $m < 60 then "\($m)m ago"
+          elif $m < 1440 then "\(($m / 60) | floor)h ago"
+          else "\(($m / 1440) | floor)d ago" end
+        end;
+      .[] |
+      .metadata as $m | .status as $s |
+      [
+        ($m.name // "-"),
+        ($s.content.git.branch // "-"),
+        ($m.createdAt | age),
+        ($s.activitySignal.timestamp | active),
+        .id
+      ] | @tsv'
+  ) || return
+
+  if [[ -z "$rows" ]]; then
+    print -u2 "ona-ssh: no running environments found."
+    return 1
+  fi
+
+  env_id=$(
+    {
+      printf 'NAME\tBRANCH\tAGE\tACTIVE\tID\n'
+      printf '%s\n' "$rows"
+    } | column -t -s $'\t' | fzf --header-lines=1 --prompt="ona env > " | awk '{print $NF}'
+  ) || return
+
+  [[ -n "$env_id" ]] && printf '%s\n' "$env_id"
+}
+
+ona-ssh() {
+  local mode="${ONA_SSH_MODE:-zellij}"
+  local session="${ONA_SSH_SESSION:-main}"
+  local layout="${ONA_SSH_LAYOUT:-dev}"
+  local env_id remote_cmd
+
+  case "${1:-}" in
+    --plain)
+      mode=plain
+      shift
+      ;;
+    --tmux)
+      mode=tmux
+      shift
+      ;;
+    --zellij)
+      mode=zellij
+      shift
+      ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: ona-ssh [--tmux|--zellij|--plain] [environment-id]
+
+Pick a running Ona environment with fzf, then SSH into it.
+With an environment ID or unique partial ID, skips the picker.
+
+Modes:
+  --zellij  Attach/create remote zellij session named $ONA_SSH_SESSION, default main.
+            New zellij sessions use layout $ONA_SSH_LAYOUT, default dev.
+  --tmux    Attach/create remote tmux session named $ONA_SSH_SESSION, default main.
+  --plain   Run plain `ona environment ssh`.
+
+Default mode: $ONA_SSH_MODE, or zellij when unset.
+EOF
+      return
+      ;;
+  esac
+
+  command -v ona >/dev/null 2>&1 || {
+    print -u2 "ona-ssh: missing command: ona"
+    return 127
+  }
+
+  env_id="${1:-}"
+  if [[ -z "$env_id" ]]; then
+    _ona_require_commands jq fzf column awk || return
+    env_id=$(_ona_pick_running_env) || return
+  fi
+
+  case "$mode" in
+    plain)
+      ona environment ssh "$env_id"
+      ;;
+    tmux)
+      remote_cmd="if command -v tmux >/dev/null 2>&1; then exec tmux new-session -A -s ${session:q}; else exec \${SHELL:-/bin/sh} -l; fi"
+      ona environment ssh "$env_id" -- -t "$remote_cmd"
+      ;;
+    zellij)
+      remote_cmd="if command -v zellij >/dev/null 2>&1; then exec zellij -l ${layout:q} attach ${session:q} -c; else exec \${SHELL:-/bin/sh} -l; fi"
+      ona environment ssh "$env_id" -- -t "$remote_cmd"
+      ;;
+    *)
+      print -u2 "ona-ssh: unknown mode '$mode' (expected tmux, zellij, or plain)"
+      return 2
+      ;;
+  esac
+}
+
+ona-up() {
+  if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    cat <<'EOF'
+Usage: ona-up <repo-url|project-id> [ona environment create flags...]
+
+Create an Ona environment, wait for it to start, then run ona-ssh.
+EOF
+    return $(( $# == 0 ? 2 : 0 ))
+  fi
+
+  ona environment create "$@" && ona-ssh
+}
