@@ -291,13 +291,15 @@ install-deps-linux-remote:
         echo "Unsupported package manager. linux-remote v1 supports apt and dnf only. PRs welcome." >&2
         exit 1
     fi
-    cli_deps="stow zsh tmux zoxide fzf neovim fd-find git curl unzip zsh-autosuggestions zsh-syntax-highlighting"
+    cli_deps="stow zsh tmux zoxide fzf neovim fd-find git curl unzip zsh-autosuggestions zsh-syntax-highlighting ripgrep jq bat"
     case "$pm" in
         apt) sudo apt-get update && sudo apt-get install -y $cli_deps ;;
         dnf) sudo dnf install -y $cli_deps ;;
     esac
     just install-zellij
     just install-yazi
+    just install-lazygit
+    just install-gh
 
 # Install dependencies for the mac-workstation profile (Homebrew). Profile-blind:
 # assumes it is being invoked on a Darwin host. Body lifted from the Darwin
@@ -388,6 +390,68 @@ install-resvg:
     curl -fsSL "$url" | tar -xz -C "$tmpdir"
     install -m 755 "$tmpdir/resvg" "$local_bin/resvg"
     echo "resvg installed to $local_bin/resvg"
+
+# Install lazygit from prebuilt binary. Lazygit's release filename embeds the
+# version (e.g., lazygit_0.42.0_Linux_x86_64.tar.gz), so we query the GitHub
+# API for the latest tag before constructing the URL.
+[private]
+install-lazygit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v lazygit >/dev/null; then
+        echo "lazygit already installed, skipping."
+        exit 0
+    fi
+    echo "Installing lazygit from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    arch=$(uname -m)
+    version=$(curl -fsSL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
+        | grep -oE '"tag_name": *"v[^"]+"' | head -n1 | sed -E 's/.*"v([^"]+)".*/\1/')
+    if [ -z "$version" ]; then
+        echo "Failed to resolve lazygit latest version from GitHub API." >&2
+        exit 1
+    fi
+    url="https://github.com/jesseduffield/lazygit/releases/download/v${version}/lazygit_${version}_Linux_${arch}.tar.gz"
+    echo "Downloading $url"
+    curl -fsSL "$url" | tar -xz -C "$tmpdir"
+    install -m 755 "$tmpdir/lazygit" "$local_bin/lazygit"
+    echo "lazygit installed to $local_bin/lazygit"
+
+# Install gh (GitHub CLI) from prebuilt binary. gh ships .deb/.rpm packages on
+# its release page but binary-fetch is uniform across apt/dnf and matches the
+# zellij/yazi/lazygit pattern. Tarball layout: gh_<v>_linux_<arch>/bin/gh.
+[private]
+install-gh:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v gh >/dev/null; then
+        echo "gh already installed, skipping."
+        exit 0
+    fi
+    echo "Installing gh (GitHub CLI) from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    case "$(uname -m)" in
+        x86_64)  gh_arch=amd64 ;;
+        aarch64) gh_arch=arm64 ;;
+        *) echo "Unsupported arch for gh: $(uname -m)" >&2; exit 1 ;;
+    esac
+    version=$(curl -fsSL "https://api.github.com/repos/cli/cli/releases/latest" \
+        | grep -oE '"tag_name": *"v[^"]+"' | head -n1 | sed -E 's/.*"v([^"]+)".*/\1/')
+    if [ -z "$version" ]; then
+        echo "Failed to resolve gh latest version from GitHub API." >&2
+        exit 1
+    fi
+    url="https://github.com/cli/cli/releases/download/v${version}/gh_${version}_linux_${gh_arch}.tar.gz"
+    echo "Downloading $url"
+    curl -fsSL "$url" | tar -xz -C "$tmpdir"
+    install -m 755 "$tmpdir/gh_${version}_linux_${gh_arch}/bin/gh" "$local_bin/gh"
+    echo "gh installed to $local_bin/gh"
 
 # Install flatpak apps
 [private]
