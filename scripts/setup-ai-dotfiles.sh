@@ -48,7 +48,7 @@ if [ ! -f "$dir/justfile" ]; then
   exit 1
 fi
 
-echo "setup-ai-dotfiles: linking Claude config"
+echo "setup-ai-dotfiles: linking AI config"
 (
   cd "$dir"
   just link

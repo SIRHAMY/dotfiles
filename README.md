@@ -329,7 +329,7 @@ Before invoking `just setup`, `bootstrap.sh` runs `check-conflicts` and **auto-b
 
 ### AI dotfiles
 
-`linux-remote` also runs `just setup-ai-dotfiles` after the base CLI setup. It clones or updates the private AI config repo, then runs that repo's `just link` so Claude config is sourced from Git instead of copied by hand.
+`linux-remote` also runs `just setup-ai-dotfiles` after the base CLI setup. It clones or updates the private AI config repo, then runs that repo's `just link` so Claude config and cross-harness skills are sourced from Git instead of copied by hand.
 
 Defaults:
 
@@ -369,7 +369,7 @@ The script stores mutable state under `$EFS_MOUNT_POINT/state` and symlinks only
 ~/.zsh_history      -> $EFS_MOUNT_POINT/state/shell/zsh_history
 ```
 
-Claude config that belongs in Git stays managed by `ai-dotfiles` (`~/.claude/CLAUDE.md`, `~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`). EFS is only for runtime state such as `/vim` mode, old Claude sessions, todos, and shell history.
+Agent config that belongs in Git stays managed by `ai-dotfiles` (`~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`, `~/.agents/skills`). EFS is only for runtime state such as `/vim` mode, old Claude sessions, todos, agent histories, and shell history.
 
 Codex follows the same rule: config, rules, memories, prompt history, and old sessions are shared; auth tokens, caches, logs, plugin caches, and SQLite runtime databases stay local to each machine. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
 
