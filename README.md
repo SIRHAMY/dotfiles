@@ -325,6 +325,8 @@ DOTFILES_PROFILE=linux-remote just setup        # env var
 
 `bootstrap.sh` is the one-line entrypoint for fresh remote envs (Ona, Codespaces, plain SSH boxes). It only sets `DOTFILES_PROFILE` if unset — it does not clobber a pre-existing value — then exec's `just setup`. It does not auto-install `just`; if `just` is missing it fails loud with the canonical install command (`https://just.systems/install.sh`).
 
+Before invoking `just setup`, `bootstrap.sh` runs `check-conflicts` and **auto-backs-up** any pre-existing files that would collide with stow (e.g., the `~/.bashrc` / `~/.zshenv` that base images often ship). Originals move to `*.pre-stow.<timestamp>.bak`; nothing is deleted. This makes the unattended path on remote dev envs work out of the box. If you need to disable this, run `just setup` directly instead of `./bootstrap.sh`.
+
 ### Resolution precedence
 
 `profile=` arg > `$DOTFILES_PROFILE` > **fail loud** (no OS default).
