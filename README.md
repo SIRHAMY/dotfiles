@@ -373,12 +373,39 @@ Agent config that belongs in Git stays managed by `ai-dotfiles` (`~/.claude/comm
 
 Codex follows the same rule: config, rules, memories, prompt history, and old sessions are shared; auth tokens, caches, logs, plugin caches, and SQLite runtime databases stay local to each machine. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
 
+EFS guardrails:
+
+- Do not mount EFS over `$HOME` by default. Prefer `EFS_MOUNT_POINT=/home/vscode/.efs` and explicit symlinks.
+- Do not put source-controlled config in EFS. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`.
+- Do not put secrets in EFS. Keep API keys, OAuth tokens, SSH keys, and app auth files in Ona secrets or machine-local storage.
+- Do not share dependency caches or runtime databases unless there is a proven need. Keep package caches, plugin caches, logs, `node_modules`, virtualenvs, and SQLite/WAL files local.
+- Add new agents conservatively: identify their config paths, runtime-state paths, auth paths, and cache paths first, then link only the state worth preserving.
+
 Useful overrides:
 
 ```sh
 DOTFILES_EFS_STATE_ROOT=/some/efs/path/state
 DOTFILES_SKIP_EFS_STATE=1
 DOTFILES_EFS_ALLOW_UNMOUNTED=1    # local testing only
+```
+
+Rollback a selective EFS link by removing the symlink and moving the stored state back from EFS. Example for Claude projects:
+
+```sh
+rm ~/.claude/projects
+mv "$EFS_MOUNT_POINT/state/claude/projects" ~/.claude/projects
+```
+
+Repeat the same pattern for the path you want to localize again. If setup backed up a conflicting local path, restore the matching `*.pre-efs.<timestamp>.bak` file or directory instead:
+
+```sh
+mv ~/.claude/projects.pre-efs.<timestamp>.bak ~/.claude/projects
+```
+
+To disable all future EFS linking on a machine, unset `EFS_MOUNT_POINT` or run setup with:
+
+```sh
+DOTFILES_SKIP_EFS_STATE=1 just setup profile=linux-remote
 ```
 
 ### Ona helpers
