@@ -26,4 +26,4 @@ unset rc
 
 alias clauded='claude --dangerously-skip-permissions'
 
-. "$HOME/.cargo/env"
+[ -r "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
