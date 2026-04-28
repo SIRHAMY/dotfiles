@@ -18,6 +18,12 @@ default-root-container-orientation = 'auto'
 
 automatically-unhide-macos-hidden-apps = false
 
+# Ghostty uses macOS native tabs, which macOS exposes as separate windows to
+# tiling WMs. Float those records so tabs don't consume extra tile slots.
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+run = ['layout floating']
+
 # Reserve 28px at the top so tiled windows don't sit under SketchyBar.
 # Must match the `--bar height` in sketchybar/.config/sketchybar/sketchybarrc.
 [gaps]
