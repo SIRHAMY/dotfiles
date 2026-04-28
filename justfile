@@ -265,6 +265,77 @@ install-deps:
         exit 1
     fi
 
+# Install dependencies for the linux-workstation profile (Fedora dnf + GUI deps).
+# Profile-blind: assumes it is being invoked on a Fedora host. Body lifted from
+# the Linux branch of the legacy `install-deps` recipe (WRK-002 P3).
+[private]
+install-deps-linux-workstation:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Enable COPR repos for packages not in default Fedora repos
+    sudo dnf copr enable atim/lazygit -y
+    deps=(stow zsh zoxide fzf tmux neovim fd-find lazygit sway swaylock swayidle waybar mako wofi \
+          grim slurp wl-clipboard brightnessctl playerctl \
+          zsh-autosuggestions zsh-syntax-highlighting \
+          ibm-plex-sans-fonts ibm-plex-mono-fonts \
+          NetworkManager-tui gnome-keyring flatpak)
+    echo "Installing with dnf: ${deps[*]}"
+    sudo dnf install -y "${deps[@]}"
+    just install-zellij
+    just install-yazi
+    just install-resvg
+    just install-flatpaks
+
+# Install dependencies for the linux-remote profile (apt or dnf, CLI-only set,
+# no GRUB/NVIDIA/flatpak/sway). Detects the package manager at runtime; fails
+# loud on anything other than apt-get or dnf. install-zellij and install-yazi
+# are already idempotent via `command -v` guards (WRK-002 P3).
+[private]
+install-deps-linux-remote:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v apt-get >/dev/null; then
+        pm=apt
+    elif command -v dnf >/dev/null; then
+        pm=dnf
+    else
+        echo "Unsupported package manager. linux-remote v1 supports apt and dnf only. PRs welcome." >&2
+        exit 1
+    fi
+    cli_deps="stow zsh tmux zoxide fzf neovim fd-find git curl unzip zsh-autosuggestions zsh-syntax-highlighting"
+    case "$pm" in
+        apt) sudo apt-get update && sudo apt-get install -y $cli_deps ;;
+        dnf) sudo dnf install -y $cli_deps ;;
+    esac
+    just install-zellij
+    just install-yazi
+
+# Install dependencies for the mac-workstation profile (Homebrew). Profile-blind:
+# assumes it is being invoked on a Darwin host. Body lifted from the Darwin
+# branch of the legacy `install-deps` recipe (WRK-002 P3).
+[private]
+install-deps-mac-workstation:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! command -v brew >/dev/null; then
+        echo "Homebrew not found. Install from https://brew.sh" >&2
+        exit 1
+    fi
+    # SketchyBar lives in a third-party tap, not core. Tap first so the
+    # `brew install sketchybar` line below resolves.
+    brew tap FelixKratz/formulae
+    brew install stow zsh zoxide fzf zellij tmux neovim fd lazygit yazi sketchybar \
+        zsh-autosuggestions zsh-syntax-highlighting
+    # Cask installs are guarded for idempotency: brew --cask install errors
+    # on already-installed in some versions. AeroSpace is in a third-party
+    # tap (nikitabobko/tap), so install with the fully-qualified name; the
+    # short name still works for the `brew list` idempotency probe.
+    brew list --cask ghostty &>/dev/null || brew install --cask ghostty
+    brew list --cask aerospace &>/dev/null || brew install --cask nikitabobko/tap/aerospace
+    # Autostart sketchybar at login. Idempotent — `brew services start` is a
+    # no-op if it's already running.
+    brew services start sketchybar
+
 # Install zellij from prebuilt binary
 [private]
 install-zellij:
