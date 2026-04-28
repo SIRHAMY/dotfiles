@@ -93,9 +93,13 @@ ona-ssh() {
   local mode="${ONA_SSH_MODE:-zellij}"
   local session="${ONA_SSH_SESSION:-main}"
   local layout="${ONA_SSH_LAYOUT:-dev}"
-  local env_id remote_cmd
+  local env_id remote_cmd remote_term remote_colorterm
   local remote_shell_setup='if command -v zsh >/dev/null 2>&1; then export SHELL="$(command -v zsh)"; fi'
   local remote_shell_fallback='if [ -n "${SHELL:-}" ] && [ -x "$SHELL" ]; then exec "$SHELL" -l; else exec /bin/sh -l; fi'
+
+  remote_term="${ONA_SSH_TERM:-xterm-256color}"
+  remote_colorterm="${ONA_SSH_COLORTERM:-truecolor}"
+  local remote_term_setup="export TERM=${remote_term:q}; export COLORTERM=${remote_colorterm:q}"
 
   case "${1:-}" in
     --plain)
@@ -145,11 +149,11 @@ EOF
       ona environment ssh "$env_id"
       ;;
     tmux)
-      remote_cmd="${remote_shell_setup}; if command -v tmux >/dev/null 2>&1; then [ -n \"\${SHELL:-}\" ] && tmux set-option -g default-shell \"\$SHELL\" >/dev/null 2>&1 || true; exec tmux new-session -A -s ${session:q}; else ${remote_shell_fallback}; fi"
+      remote_cmd="${remote_shell_setup}; ${remote_term_setup}; if command -v tmux >/dev/null 2>&1; then [ -n \"\${SHELL:-}\" ] && tmux set-option -g default-shell \"\$SHELL\" >/dev/null 2>&1 || true; exec tmux new-session -A -s ${session:q}; else ${remote_shell_fallback}; fi"
       ona environment ssh "$env_id" -- -t "$remote_cmd"
       ;;
     zellij)
-      remote_cmd="${remote_shell_setup}; if command -v zellij >/dev/null 2>&1; then exec zellij -l ${layout:q} attach ${session:q} -c; else ${remote_shell_fallback}; fi"
+      remote_cmd="${remote_shell_setup}; ${remote_term_setup}; if command -v zellij >/dev/null 2>&1; then exec zellij -l ${layout:q} attach ${session:q} -c; else ${remote_shell_fallback}; fi"
       ona environment ssh "$env_id" -- -t "$remote_cmd"
       ;;
     *)

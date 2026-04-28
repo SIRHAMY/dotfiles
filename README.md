@@ -434,7 +434,7 @@ ona-up <repo-url|project-id>       # create an environment, then run ona-ssh
 zellij -l dev attach main -c
 ```
 
-For zellij and tmux modes, `ona-ssh` exports remote `SHELL` to zsh when zsh exists before launching the multiplexer, so newly-created panes follow the zsh default even if Ona's login shell is still bash.
+For zellij and tmux modes, `ona-ssh` exports remote `SHELL` to zsh when zsh exists before launching the multiplexer, so newly-created panes follow the zsh default even if Ona's login shell is still bash. It also forces remote `TERM=xterm-256color` and `COLORTERM=truecolor` for multiplexer modes. This avoids Ghostty's local `xterm-ghostty` terminfo leaking into remote boxes that do not know that terminal entry.
 
 Useful overrides:
 
@@ -443,6 +443,7 @@ ona-ssh --plain                   # SSH only, no remote multiplexer
 ona-ssh <environment-id>           # skip the picker
 ONA_SSH_SESSION=dotfiles ona-ssh   # use a different remote zellij session
 ONA_SSH_LAYOUT=compact ona-ssh     # use a different layout for new sessions
+ONA_SSH_TERM=xterm-ghostty ona-ssh # opt back into local TERM if remote terminfo supports it
 ```
 
 ### Resolution precedence
