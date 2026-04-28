@@ -108,10 +108,20 @@ brew install just stow git
 ```sh
 git clone git@github.com:SIRHAMY/dotfiles.git ~/Code/dotfiles
 cd ~/Code/dotfiles
-just setup
+just setup profile=linux-workstation   # Fedora desktop
+# or
+just setup profile=mac-workstation     # Mac
 ```
 
-`just setup` runs `install-deps` (dnf on Fedora; brew + casks on Mac), then `check-conflicts`, then `all` (per-bucket stow). On Linux it also runs `setup-sway-session`.
+`just setup profile=<name>` runs the matching `install-deps-<profile>` recipe (dnf on Fedora workstation; brew + casks on Mac), then `check-conflicts`, then `all` (per-bucket stow). On `linux-workstation` it also runs `setup-sway-session`.
+
+**Profile is required** — `just setup` with no profile and no `$DOTFILES_PROFILE` exits with a list of valid profiles for the current OS. For ergonomic muscle memory, export the profile once in your shell rc (e.g. `~/.zprofile`):
+
+```sh
+export DOTFILES_PROFILE=linux-workstation
+```
+
+Then plain `just setup` works again. See §15 for the remote-profile path and full precedence rules.
 
 ## 8. macOS setup
 
@@ -298,3 +308,70 @@ For a focused-workspace-only view: `swaymsg -t get_tree | jq '.. | select(.type?
 | Next/prev buffer | `Tab` / `Shift+Tab` |
 | Copy file path | `<leader>cp` |
 | Copy file directory | `<leader>cd` |
+
+## 15. Remote profile
+
+A second axis on top of the `{common,linux,macos}` package buckets: **profile**. Three v1 profiles — `linux-workstation` (Fedora desktop with sway/waybar/etc.), `linux-remote` (headless dev essentials only), `mac-workstation` (Mac with AeroSpace/SketchyBar). Profile selects which buckets to stow and which `install-deps-*` recipe to run. The OS axis stays unchanged.
+
+### Invocation
+
+Three equivalent forms:
+
+```sh
+./bootstrap.sh                                  # defaults DOTFILES_PROFILE=linux-remote, then exec's just setup
+just setup profile=linux-remote                 # explicit arg
+DOTFILES_PROFILE=linux-remote just setup        # env var
+```
+
+`bootstrap.sh` is the one-line entrypoint for fresh remote envs (Ona, Codespaces, plain SSH boxes). It only sets `DOTFILES_PROFILE` if unset — it does not clobber a pre-existing value — then exec's `just setup`. It does not auto-install `just`; if `just` is missing it fails loud with the canonical install command (`https://just.systems/install.sh`).
+
+### Resolution precedence
+
+`profile=` arg > `$DOTFILES_PROFILE` > **fail loud** (no OS default).
+
+`just setup` with no arg and no env var exits 1 with the valid profiles for the current OS. Workstation users either pass `profile=linux-workstation` (or `mac-workstation`) explicitly each time, or `export DOTFILES_PROFILE=linux-workstation` once in `~/.zprofile`. `setup`'s first line of output echoes the resolved profile and where it came from:
+
+```
+Setup: profile=linux-remote (resolved from $DOTFILES_PROFILE)
+Setup: profile=linux-workstation (resolved from arg)
+```
+
+So an env-var leak is visible immediately, not silent.
+
+### What `linux-remote` includes
+
+Stowed: `zsh` (+ plugins via OS package manager), `tmux`, `zellij`, `nvim` (+ LazyVim), `yazi`, `git`, `bash`, `bin`, plus the `zsh-linux` conf.d bucket (cargo/opencode PATH guards, plugin source paths — both valid on Debian/Ubuntu and Fedora).
+
+### What `linux-remote` skips
+
+Stow buckets: `ghostty`, `sway`, `swaylock`, `waybar`, `mako`, `wofi`, `fontconfig`, `environment.d`, `bin-linux`. Recipes: no GRUB edits, no NVIDIA detection, no flatpak/Obsidian install, no `setup-sway-session`. The remote `$HOME` never sees those symlinks; `linux-remote` issues exactly one `sudo` invocation — the package-manager install.
+
+### Supported package managers (remote)
+
+`install-deps-linux-remote` detects `apt-get` and `dnf`. Anything else (apk, pacman, zypper, …) fails with:
+
+```
+Unsupported package manager. linux-remote v1 supports apt and dnf only. PRs welcome.
+```
+
+### Recovering from a leaked `DOTFILES_PROFILE`
+
+If a synced shell rc exports `DOTFILES_PROFILE=linux-remote` and you're on a workstation, `just setup` will silently default to remote — except that `setup`'s first-line banner makes it visible. To override for one invocation, pass `profile=` (arg wins over env). To clear it for the session:
+
+```sh
+unset DOTFILES_PROFILE
+just setup profile=linux-workstation
+```
+
+Confirm via the banner that the resolved profile and source match what you expect.
+
+### Migrating between profiles on the same host
+
+Switching a host from `linux-workstation` to `linux-remote` (or back) on the same checkout: unstow under the old profile first, then setup under the new one. Avoids stale symlinks from the prior profile (`~/.config/sway/`, `~/.config/waybar/`, etc.) blocking the new install:
+
+```sh
+just unstow-all profile=linux-workstation
+just setup profile=linux-remote
+```
+
+`check-conflicts` walks only the resolved profile's package list, so it won't false-fail on workstation-only paths under a remote install — but stale symlinks left over from the prior profile stay on disk until you unstow them. The migration above is the clean path.
