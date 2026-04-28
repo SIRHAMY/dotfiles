@@ -4,6 +4,15 @@ packages_common := "zsh tmux ghostty zellij nvim yazi git bash bin"
 packages_linux  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
 packages_macos  := "zsh-macos aerospace sketchybar"
 
+# Profile-aware package classification (WRK-002). The five vars below are the
+# new shape; the three vars above are kept temporarily so legacy recipes still
+# work while the cutover lands phase-by-phase.
+packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin"
+packages_common_workstation := "ghostty"
+packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
+packages_linux_remote       := "zsh-linux"
+packages_macos_workstation  := "zsh-macos aerospace sketchybar"
+
 # Link everything for the current OS. Pre-flights conflicts (fails loud on any
 # pre-existing non-symlink at a target path), then stows per bucket.
 all:
@@ -91,6 +100,93 @@ setup:
     @just install-deps
     @just all
     @if [ "{{os}}" = "Linux" ]; then just setup-sway-session; fi
+
+# Resolve+validate+derive profile dispatch context (WRK-002). Single source of
+# truth used by every profile-aware recipe (setup, all, check-conflicts,
+# unstow-all, restow, plan). Output contract: stdout is a series of `var=value`
+# assignments, safe to `eval` into the caller's shell. Emitted values are
+# alphanumeric+hyphen by construction (profile names, bucket names like
+# `linux`/`macos`, recipe names like `install-deps-*`, lowercase package-name
+# tokens), so `eval` is safe. Standalone-debuggable: `just _profile-context
+# linux-remote` echoes the assignments without side effects.
+#
+# Resolution precedence: profile= arg > $DOTFILES_PROFILE > fail-loud. No OS
+# default — if both are empty, exits 1 with the valid-profiles list for the
+# current OS. OS:profile mismatch (e.g., mac-workstation on Linux) also exits 1.
+#
+# Caller pattern: capture-then-eval, NOT inline `eval "$(just _profile-context …)"`.
+# Bash does not propagate failure from `$()` through `eval` even with
+# inherit_errexit, so the inline form silently swallows the helper's exit-1.
+# Recipes should do:
+#     ctx="$(just _profile-context "{{profile}}")"
+#     eval "$ctx"
+# With `set -euo pipefail`, the assignment fails when the helper exits non-zero
+# and the caller aborts before reaching eval. Helper's stderr (the error
+# message) is already emitted at that point.
+[private]
+_profile-context profile="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    os="$(uname -s)"
+    case "$os" in
+      Linux)  valid="linux-workstation linux-remote" ;;
+      Darwin) valid="mac-workstation" ;;
+      *)      echo "Unsupported OS: $os" >&2; exit 2 ;;
+    esac
+
+    # Resolve precedence: arg > env > fail-loud.
+    profile="{{profile}}"
+    source=""
+    if [ -n "$profile" ]; then
+      source="arg"
+    elif [ -n "${DOTFILES_PROFILE:-}" ]; then
+      profile="$DOTFILES_PROFILE"
+      source='$DOTFILES_PROFILE'
+    else
+      first="$(echo "$valid" | awk '{print $1}')"
+      cat >&2 <<EOF
+    No profile specified. Pass profile=<name> as an argument or export DOTFILES_PROFILE.
+
+      just setup profile=$first
+      DOTFILES_PROFILE=$first just setup
+
+    Valid profiles for $os: $valid
+    EOF
+      exit 1
+    fi
+
+    # Validate against OS allowlist.
+    case " $valid " in
+      *" $profile "*) ;;
+      *) echo "Profile '$profile' is not valid for OS $os. Valid profiles for $os: $valid" >&2; exit 1 ;;
+    esac
+
+    # Derive dispatch context.
+    case "$profile" in
+      linux-workstation) common_pkgs="{{packages_common_cli}} {{packages_common_workstation}}"
+                         os_bucket="linux"
+                         os_pkgs="{{packages_linux_workstation}}"
+                         deps_recipe="install-deps-linux-workstation" ;;
+      linux-remote)      common_pkgs="{{packages_common_cli}}"
+                         os_bucket="linux"
+                         os_pkgs="{{packages_linux_remote}}"
+                         deps_recipe="install-deps-linux-remote" ;;
+      mac-workstation)   common_pkgs="{{packages_common_cli}} {{packages_common_workstation}}"
+                         os_bucket="macos"
+                         os_pkgs="{{packages_macos_workstation}}"
+                         deps_recipe="install-deps-mac-workstation" ;;
+    esac
+
+    # Emit sourceable assignment block.
+    cat <<EOF
+    profile="$profile"
+    source="$source"
+    common_pkgs="$common_pkgs"
+    os_bucket="$os_bucket"
+    os_pkgs="$os_pkgs"
+    deps_recipe="$deps_recipe"
+    EOF
 
 [private]
 _stow-bucket bucket *pkgs:
