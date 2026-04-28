@@ -327,6 +327,31 @@ DOTFILES_PROFILE=linux-remote just setup        # env var
 
 Before invoking `just setup`, `bootstrap.sh` runs `check-conflicts` and **auto-backs-up** any pre-existing files that would collide with stow (e.g., the `~/.bashrc` / `~/.zshenv` that base images often ship). Originals move to `*.pre-stow.<timestamp>.bak`; nothing is deleted. This makes the unattended path on remote dev envs work out of the box. If you need to disable this, run `just setup` directly instead of `./bootstrap.sh`.
 
+### Ona helpers
+
+The zsh config ships two laptop-side helpers for Ona environments:
+
+```sh
+ona login                         # one-time, or whenever the CLI token expires
+ona-ssh                           # pick a running environment, then SSH in
+ona-up <repo-url|project-id>       # create an environment, then run ona-ssh
+```
+
+`ona-ssh` lists running environments with `ona environment list --running-only --format json`, shows name/branch/age/activity/id in `fzf`, then connects with `ona environment ssh`. By default it attaches to a remote zellij session named `main`, creating it with the `dev` layout when needed:
+
+```sh
+zellij -l dev attach main -c
+```
+
+Useful overrides:
+
+```sh
+ona-ssh --plain                   # SSH only, no remote multiplexer
+ona-ssh <environment-id>           # skip the picker
+ONA_SSH_SESSION=dotfiles ona-ssh   # use a different remote zellij session
+ONA_SSH_LAYOUT=compact ona-ssh     # use a different layout for new sessions
+```
+
 ### Resolution precedence
 
 `profile=` arg > `$DOTFILES_PROFILE` > **fail loud** (no OS default).
