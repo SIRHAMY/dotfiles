@@ -1,86 +1,105 @@
 os := `uname -s`
 
-packages_common := "zsh tmux ghostty zellij nvim yazi git bash bin"
-packages_linux  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
-packages_macos  := "zsh-macos aerospace sketchybar"
-
-# Profile-aware package classification (WRK-002). The five vars below are the
-# new shape; the three vars above are kept temporarily so legacy recipes still
-# work while the cutover lands phase-by-phase.
+# Profile-aware package classification (WRK-002). Profile-aware recipes
+# (`setup`, `all`, `check-conflicts`, `unstow-all`, `restow`, `plan`) all
+# resolve a profile via `_profile-context` and pick from these vars.
 packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin"
 packages_common_workstation := "ghostty"
 packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
 packages_linux_remote       := "zsh-linux"
 packages_macos_workstation  := "zsh-macos aerospace sketchybar"
 
-# Link everything for the current OS. Pre-flights conflicts (fails loud on any
-# pre-existing non-symlink at a target path), then stows per bucket.
-all:
-    @just check-conflicts
-    @just _stow-bucket common {{packages_common}}
-    @if [ "{{os}}" = "Linux" ]; then just _stow-bucket linux {{packages_linux}}; fi
-    @if [ "{{os}}" = "Darwin" ] && [ -n "{{packages_macos}}" ]; then just _stow-bucket macos {{packages_macos}}; fi
-    @echo "Done. Run 'just reload' on Linux to reload sway/waybar."
-
-# Unlink everything (reversibility — PRD NFR). Three-bucket form: OS bucket
-# unwinds first so any OS-specific directory guards get cleaned up before the
-# common owner.
-unstow-all:
-    @if [ "{{os}}" = "Linux" ]; then just _unstow-bucket linux {{packages_linux}}; fi
-    @if [ "{{os}}" = "Darwin" ] && [ -n "{{packages_macos}}" ]; then just _unstow-bucket macos {{packages_macos}}; fi
-    @just _unstow-bucket common {{packages_common}}
-    @echo "Done. Packages unlinked. Per-OS system state (Caps->Esc etc.) not reverted."
-
-# Restow — useful after deleting a snippet file to clean up dangling symlinks.
-restow:
-    @just _stow-bucket-flag -R common {{packages_common}}
-    @if [ "{{os}}" = "Linux" ]; then just _stow-bucket-flag -R linux {{packages_linux}}; fi
-    @if [ "{{os}}" = "Darwin" ] && [ -n "{{packages_macos}}" ]; then just _stow-bucket-flag -R macos {{packages_macos}}; fi
-
-# Dry-run plan for the current OS.
-plan:
-    @just _plan-bucket common {{packages_common}}
-    @if [ "{{os}}" = "Linux" ]; then just _plan-bucket linux {{packages_linux}}; fi
-    @if [ "{{os}}" = "Darwin" ] && [ -n "{{packages_macos}}" ]; then just _plan-bucket macos {{packages_macos}}; fi
-
-# Pre-flight: walk the package tree directly (no stow-output parsing). For every
-# file a package would link to $HOME, if the target exists as a non-symlink or
-# as a symlink pointing outside this repo, fail loudly listing all conflicts and
-# a suggested remediation. This satisfies PRD Must-Have "Pre-existing dotfile
-# handling — exit non-zero with a clear remediation message."
-#
-# Not marked [private] so users can run `just check-conflicts` standalone for
-# pre-migration auditing.
-check-conflicts:
+# Link everything for the resolved profile. Pre-flights conflicts (fails loud
+# on any pre-existing non-symlink at a target path), then stows per bucket.
+all profile="":
     #!/usr/bin/env bash
     set -euo pipefail
+    ctx="$(just _profile-context "{{profile}}")"
+    eval "$ctx"
+    just check-conflicts profile="$profile"
+    just _stow-bucket common $common_pkgs
+    if [ -n "$os_pkgs" ]; then
+      just _stow-bucket "$os_bucket" $os_pkgs
+    fi
+    echo "Done. Run 'just reload' on Linux to reload sway/waybar."
+
+# Unlink everything (reversibility — PRD NFR). OS bucket unwinds first so any
+# OS-specific directory guards get cleaned up before the common owner.
+unstow-all profile="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ctx="$(just _profile-context "{{profile}}")"
+    eval "$ctx"
+    if [ -n "$os_pkgs" ]; then
+      just _unstow-bucket "$os_bucket" $os_pkgs
+    fi
+    just _unstow-bucket common $common_pkgs
+    echo "Done. Packages unlinked. Per-OS system state (Caps->Esc etc.) not reverted."
+
+# Restow — useful after deleting a snippet file to clean up dangling symlinks.
+restow profile="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ctx="$(just _profile-context "{{profile}}")"
+    eval "$ctx"
+    just _stow-bucket-flag -R common $common_pkgs
+    if [ -n "$os_pkgs" ]; then
+      just _stow-bucket-flag -R "$os_bucket" $os_pkgs
+    fi
+
+# Dry-run plan for the resolved profile.
+plan profile="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ctx="$(just _profile-context "{{profile}}")"
+    eval "$ctx"
+    just _plan-bucket common $common_pkgs
+    if [ -n "$os_pkgs" ]; then
+      just _plan-bucket "$os_bucket" $os_pkgs
+    fi
+
+# Pre-flight: walk the resolved profile's package list (no stow-output parsing).
+# For every file a package would link to $HOME, if the target exists as a
+# non-symlink or as a symlink pointing outside this repo, fail loudly listing
+# all conflicts and a suggested remediation. This satisfies PRD Must-Have
+# "Pre-existing dotfile handling — exit non-zero with a clear remediation
+# message."
+#
+# Profile-aware (WRK-002 P4): walks only directories named in the resolved
+# profile's package list, not every directory in the bucket. Avoids false-fail
+# on stale workstation symlinks during a remote install.
+#
+# Not marked [private] so users can run `just check-conflicts profile=<name>`
+# standalone for pre-migration auditing.
+check-conflicts profile="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ctx="$(just _profile-context "{{profile}}")"
+    eval "$ctx"
     repo_root="$(git rev-parse --show-toplevel)"
-    case "{{os}}" in
-      Linux)  buckets=(common linux) ;;
-      Darwin) buckets=(common macos) ;;
-      *)      echo "Unsupported OS: {{os}}" >&2; exit 2 ;;
-    esac
+    pkg_paths=()
+    for p in $common_pkgs; do pkg_paths+=("$repo_root/packages/common/$p"); done
+    for p in $os_pkgs;     do pkg_paths+=("$repo_root/packages/$os_bucket/$p"); done
     conflicts=()
-    for b in "${buckets[@]}"; do
-      for pkg in "$repo_root/packages/$b"/*/; do
-        [ -d "$pkg" ] || continue
-        # Walk every regular file and symlink under the package.
-        while IFS= read -r -d '' src; do
-          rel="${src#"$pkg"}"       # path relative to the package root
-          abs="$HOME/$rel"          # where stow would link it
-          if [ -L "$abs" ]; then
-            # Existing symlink — OK iff it points into our repo.
-            lnk="$(readlink "$abs")"
-            case "$lnk" in
-              "$repo_root"/*|./*|../*) : ;;   # ours (or relative to stow)
-              /*) conflicts+=("$abs -> $lnk (foreign symlink)") ;;
-              *)  : ;;
-            esac
-          elif [ -e "$abs" ]; then
-            conflicts+=("$abs (non-symlink; would collide)")
-          fi
-        done < <(find "$pkg" -mindepth 1 \( -type f -o -type l \) -print0)
-      done
+    for pkg in "${pkg_paths[@]}"; do
+      [ -d "$pkg" ] || continue
+      pkg="${pkg%/}/"           # ensure trailing slash for rel-path stripping
+      # Walk every regular file and symlink under the package.
+      while IFS= read -r -d '' src; do
+        rel="${src#"$pkg"}"       # path relative to the package root
+        abs="$HOME/$rel"          # where stow would link it
+        if [ -L "$abs" ]; then
+          # Existing symlink — OK iff it points into our repo.
+          lnk="$(readlink "$abs")"
+          case "$lnk" in
+            "$repo_root"/*|./*|../*) : ;;   # ours (or relative to stow)
+            /*) conflicts+=("$abs -> $lnk (foreign symlink)") ;;
+            *)  : ;;
+          esac
+        elif [ -e "$abs" ]; then
+          conflicts+=("$abs (non-symlink; would collide)")
+        fi
+      done < <(find "$pkg" -mindepth 1 \( -type f -o -type l \) -print0)
     done
     if [ "${#conflicts[@]}" -gt 0 ]; then
       echo "check-conflicts: pre-existing paths would collide with stow:" >&2
@@ -89,17 +108,26 @@ check-conflicts:
 
     To resolve: back up each conflicting file and rerun. For example:
       mv ~/.zshrc ~/.zshrc.pre-stow.bak
-    Then: just setup
+    Then: just setup profile=<your-profile>
     EOF
       exit 1
     fi
 
-# Setup on a fresh machine (install deps + link everything)
-setup:
-    @echo "Setting up for {{os}}..."
-    @just install-deps
-    @just all
-    @if [ "{{os}}" = "Linux" ]; then just setup-sway-session; fi
+# Setup on a fresh machine (install deps + link everything) for the resolved
+# profile. Echoes a loud banner so the resolved profile and its source are
+# visible at the start of every run.
+setup profile="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ctx="$(just _profile-context "{{profile}}")"
+    eval "$ctx"
+    echo "Setup: profile=$profile (resolved from $source)"
+    echo "Setting up for $(uname -s)..."
+    just "$deps_recipe"
+    just all profile="$profile"
+    case "$profile" in
+        linux-workstation) just setup-sway-session ;;
+    esac
 
 # Resolve+validate+derive profile dispatch context (WRK-002). Single source of
 # truth used by every profile-aware recipe (setup, all, check-conflicts,
@@ -136,7 +164,11 @@ _profile-context profile="":
     esac
 
     # Resolve precedence: arg > env > fail-loud.
+    # Normalize a leading "profile=" prefix so `just <recipe> profile=<name>`
+    # (which just 1.x passes as the literal positional `profile=<name>`, not as
+    # parameter binding) works the same as `just <recipe> <name>`.
     profile="{{profile}}"
+    profile="${profile#profile=}"
     source=""
     if [ -n "$profile" ]; then
       source="arg"
@@ -221,49 +253,6 @@ _plan-bucket bucket *pkgs:
       echo "=== $pkg ==="
       stow -n -v --no-folding -d packages/{{bucket}} -t ~ "$pkg" 2>&1
     done
-
-# Install dependencies for the current OS
-[private]
-install-deps:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ "{{os}}" = "Linux" ]; then
-        # Enable COPR repos for packages not in default Fedora repos
-        sudo dnf copr enable atim/lazygit -y
-        deps=(stow zsh zoxide fzf tmux neovim fd-find lazygit sway swaylock swayidle waybar mako wofi \
-              grim slurp wl-clipboard brightnessctl playerctl \
-              zsh-autosuggestions zsh-syntax-highlighting \
-              ibm-plex-sans-fonts ibm-plex-mono-fonts \
-              NetworkManager-tui gnome-keyring flatpak)
-        echo "Installing with dnf: ${deps[*]}"
-        sudo dnf install -y "${deps[@]}"
-        just install-zellij
-        just install-yazi
-        just install-resvg
-        just install-flatpaks
-    elif [ "{{os}}" = "Darwin" ]; then
-        if ! command -v brew >/dev/null; then
-            echo "Homebrew not found. Install from https://brew.sh" >&2
-            exit 1
-        fi
-        # SketchyBar lives in a third-party tap, not core. Tap first so the
-        # `brew install sketchybar` line below resolves.
-        brew tap FelixKratz/formulae
-        brew install stow zsh zoxide fzf zellij tmux neovim fd lazygit yazi sketchybar \
-            zsh-autosuggestions zsh-syntax-highlighting
-        # Cask installs are guarded for idempotency: brew --cask install errors
-        # on already-installed in some versions. AeroSpace is in a third-party
-        # tap (nikitabobko/tap), so install with the fully-qualified name; the
-        # short name still works for the `brew list` idempotency probe.
-        brew list --cask ghostty &>/dev/null || brew install --cask ghostty
-        brew list --cask aerospace &>/dev/null || brew install --cask nikitabobko/tap/aerospace
-        # Autostart sketchybar at login. Idempotent — `brew services start` is a
-        # no-op if it's already running.
-        brew services start sketchybar
-    else
-        echo "Unsupported OS: {{os}}" >&2
-        exit 1
-    fi
 
 # Install dependencies for the linux-workstation profile (Fedora dnf + GUI deps).
 # Profile-blind: assumes it is being invoked on a Fedora host. Body lifted from
