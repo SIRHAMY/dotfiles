@@ -482,6 +482,8 @@ Stow buckets: `ghostty`, `sway`, `swaylock`, `waybar`, `mako`, `wofi`, `fontconf
 Unsupported package manager. linux-remote v1 supports apt and dnf only. PRs welcome.
 ```
 
+The package manager handles baseline CLI dependencies. Neovim is installed from the official release tarball into `~/.local/opt` with a `~/.local/bin/nvim` symlink so LazyVim is not pinned to stale distro packages.
+
 ### Recovering from a leaked `DOTFILES_PROFILE`
 
 If a synced shell rc exports `DOTFILES_PROFILE=linux-remote` and you're on a workstation, `just setup` will silently default to remote — except that `setup`'s first-line banner makes it visible. To override for one invocation, pass `profile=` (arg wins over env). To clear it for the session:

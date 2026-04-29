@@ -289,8 +289,8 @@ install-deps-linux-workstation:
 
 # Install dependencies for the linux-remote profile (apt or dnf, CLI-only set,
 # no GRUB/NVIDIA/flatpak/sway). Detects the package manager at runtime; fails
-# loud on anything other than apt-get or dnf. install-zellij and install-yazi
-# are already idempotent via `command -v` guards (WRK-002 P3).
+# loud on anything other than apt-get or dnf. Binary installers are idempotent
+# and cover tools where distro packages can lag remote-profile requirements.
 [private]
 install-deps-linux-remote:
     #!/usr/bin/env bash
@@ -303,11 +303,12 @@ install-deps-linux-remote:
         echo "Unsupported package manager. linux-remote v1 supports apt and dnf only. PRs welcome." >&2
         exit 1
     fi
-    cli_deps="stow zsh tmux zoxide fzf neovim fd-find git curl unzip zsh-autosuggestions zsh-syntax-highlighting ripgrep jq bat"
+    cli_deps="stow zsh tmux zoxide fzf fd-find git curl unzip zsh-autosuggestions zsh-syntax-highlighting ripgrep jq bat"
     case "$pm" in
         apt) sudo apt-get update && sudo apt-get install -y $cli_deps ;;
         dnf) sudo dnf install -y $cli_deps ;;
     esac
+    just install-neovim
     just install-zellij
     just install-yazi
     just install-lazygit
@@ -382,6 +383,52 @@ install-yazi:
     install -m 755 "$tmpdir/yazi-${arch}-unknown-linux-musl/yazi" "$local_bin/yazi"
     install -m 755 "$tmpdir/yazi-${arch}-unknown-linux-musl/ya" "$local_bin/ya"
     echo "yazi installed to $local_bin/yazi"
+
+# Install Neovim from the official release tarball. Ubuntu Noble ships 0.9.x,
+# which is too old for current LazyVim, so linux-remote cannot rely on apt here.
+[private]
+install-neovim:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    minimum_version="0.11.2"
+    if command -v nvim >/dev/null; then
+        current_version="$(nvim --version | sed -n '1s/^NVIM v\([0-9][0-9.]*\).*/\1/p')"
+        if [[ "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            major="${BASH_REMATCH[1]}"
+            minor="${BASH_REMATCH[2]}"
+            patch="${BASH_REMATCH[3]}"
+            if (( major > 0 || minor > 11 || (minor == 11 && patch >= 2) )); then
+                echo "nvim $current_version already installed, skipping."
+                exit 0
+            fi
+        fi
+        echo "nvim ${current_version:-unknown} is older than $minimum_version, installing release binary."
+    fi
+
+    echo "Installing Neovim from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    opt_dir="$HOME/.local/opt"
+    mkdir -p "$local_bin" "$opt_dir"
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+
+    case "$(uname -m)" in
+        x86_64)       nvim_arch=x86_64 ;;
+        aarch64|arm64) nvim_arch=arm64 ;;
+        *) echo "Unsupported arch for Neovim: $(uname -m)" >&2; exit 1 ;;
+    esac
+
+    archive="nvim-linux-${nvim_arch}"
+    url="https://github.com/neovim/neovim/releases/latest/download/${archive}.tar.gz"
+    echo "Downloading $url"
+    curl -fsSL "$url" -o "$tmpdir/${archive}.tar.gz"
+    tar -xzf "$tmpdir/${archive}.tar.gz" -C "$tmpdir"
+    rm -rf "$opt_dir/$archive"
+    mv "$tmpdir/$archive" "$opt_dir/$archive"
+    ln -sfn "$opt_dir/$archive/bin/nvim" "$local_bin/nvim"
+    echo "nvim installed to $local_bin/nvim"
+    "$local_bin/nvim" --version | head -n1
 
 # Install resvg from prebuilt binary (SVG renderer, used by yazi for previews)
 [private]
