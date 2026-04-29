@@ -441,7 +441,7 @@ ona-up https://github.com/owner/dotfiles.git       # dotfiles-20260429T153042
 ona-up <project-id> --name investigation
 ```
 
-For zellij and tmux modes, `ona-ssh` exports remote `SHELL` to zsh when zsh exists before launching the multiplexer, so newly-created panes follow the zsh default even if Ona's login shell is still bash. It also forces remote `TERM=xterm-256color` and `COLORTERM=truecolor` for multiplexer modes. This avoids Ghostty's local `xterm-ghostty` terminfo leaking into remote boxes that do not know that terminal entry.
+For every mode, `ona-ssh` exports remote `SHELL` to zsh when zsh exists before launching the shell or multiplexer, so newly-created panes follow the zsh default even if Ona's login shell is still bash. It also forces remote `TERM=xterm-256color` and `COLORTERM=truecolor`. This avoids Ghostty's local `xterm-ghostty` terminfo leaking into remote boxes that do not know that terminal entry.
 
 Useful overrides:
 

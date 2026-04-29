@@ -198,7 +198,7 @@ Modes:
   --zellij  Attach/create remote zellij session named $ONA_SSH_SESSION, default main.
             New zellij sessions use layout $ONA_SSH_LAYOUT, default dev.
   --tmux    Attach/create remote tmux session named $ONA_SSH_SESSION, default main.
-  --plain   Run plain `ona environment ssh`.
+  --plain   Open a fixed-term remote shell without zellij/tmux.
 
 Default mode: $ONA_SSH_MODE, or zellij when unset.
 EOF
@@ -219,7 +219,8 @@ EOF
 
   case "$mode" in
     plain)
-      ona environment ssh "$env_id"
+      remote_cmd="${remote_shell_setup}; ${remote_term_setup}; ${remote_shell_fallback}"
+      ona environment ssh "$env_id" -- -t "$remote_cmd"
       ;;
     tmux)
       remote_cmd="${remote_shell_setup}; ${remote_term_setup}; if command -v tmux >/dev/null 2>&1; then [ -n \"\${SHELL:-}\" ] && tmux set-option -g default-shell \"\$SHELL\" >/dev/null 2>&1 || true; exec tmux new-session -A -s ${session:q}; else ${remote_shell_fallback}; fi"
