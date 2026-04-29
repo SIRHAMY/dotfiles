@@ -17,4 +17,13 @@ layout {
     tab name="code" {
         pane
     }
+    tab name="bgterm" {
+        pane split_direction="vertical" {
+            pane
+            pane split_direction="horizontal" {
+                pane
+                pane
+            }
+        }
+    }
 }
