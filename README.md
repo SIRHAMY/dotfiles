@@ -434,6 +434,13 @@ ona-up <repo-url|project-id>       # create an environment, then run ona-ssh
 zellij -l dev attach main -c
 ```
 
+`ona-up` creates uniquely named environments by default, using `<project>-YYYYMMDDTHHMMSS` so multiple environments do not all appear as `main`. The project segment is derived from the repo URL or project ID. Pass `--name` to keep full manual control:
+
+```sh
+ona-up https://github.com/owner/dotfiles.git       # dotfiles-20260429T153042
+ona-up <project-id> --name investigation
+```
+
 For zellij and tmux modes, `ona-ssh` exports remote `SHELL` to zsh when zsh exists before launching the multiplexer, so newly-created panes follow the zsh default even if Ona's login shell is still bash. It also forces remote `TERM=xterm-256color` and `COLORTERM=truecolor` for multiplexer modes. This avoids Ghostty's local `xterm-ghostty` terminfo leaking into remote boxes that do not know that terminal entry.
 
 Useful overrides:

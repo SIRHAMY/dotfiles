@@ -39,6 +39,79 @@ _ona_require_commands() {
   fi
 }
 
+_ona_has_name_flag() {
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      --name|--name=*)
+        return 0
+        ;;
+    esac
+  done
+  return 1
+}
+
+_ona_create_target() {
+  local arg
+  local expects_value=0
+
+  for arg in "$@"; do
+    if (( expects_value )); then
+      expects_value=0
+      continue
+    fi
+
+    case "$arg" in
+      --class-id|--config|--context|--editor|--log-format|--name|--timeout)
+        expects_value=1
+        ;;
+      --*=*|--dont-wait|--interactive|--logs|-i|-v)
+        ;;
+      -*)
+        ;;
+      *)
+        printf '%s\n' "$arg"
+        return
+        ;;
+    esac
+  done
+
+  printf 'ona\n'
+}
+
+_ona_environment_name_subject() {
+  local target="${1:-ona}"
+  local subject
+
+  target="${target%%\#*}"
+  target="${target%%\?*}"
+  target="${target%/}"
+  target="${target%.git}"
+  subject="${target##*/}"
+  subject="${subject##*:}"
+  subject=$(printf '%s' "$subject" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g')
+  [[ -n "$subject" ]] || subject="ona"
+  printf '%s\n' "$subject"
+}
+
+_ona_generated_environment_name() {
+  local target="${1:-ona}"
+  local subject timestamp suffix max_subject_length
+
+  subject=$(_ona_environment_name_subject "$target") || return
+  timestamp=$(date '+%Y%m%dT%H%M%S') || return
+  suffix="-$timestamp"
+  max_subject_length=$(( 80 - ${#suffix} ))
+
+  if (( ${#subject} > max_subject_length )); then
+    subject="${subject[1,$max_subject_length]}"
+    subject="${subject%-}"
+  fi
+  [[ -n "$subject" ]] || subject="ona"
+
+  printf '%s%s\n' "$subject" "$suffix"
+}
+
 _ona_pick_running_env() {
   local json rows env_id
 
@@ -168,10 +241,20 @@ ona-up() {
     cat <<'EOF'
 Usage: ona-up <repo-url|project-id> [ona environment create flags...]
 
-Create an Ona environment, wait for it to start, then run ona-ssh.
+Create a uniquely named Ona environment, wait for it to start, then run ona-ssh.
+Pass --name to override the generated <project>-<timestamp> name.
 EOF
     return $(( $# == 0 ? 2 : 0 ))
   fi
 
-  ona environment create "$@" && ona-ssh
+  if _ona_has_name_flag "$@"; then
+    ona environment create "$@" && ona-ssh
+    return
+  fi
+
+  local target env_name
+  target=$(_ona_create_target "$@") || return
+  env_name=$(_ona_generated_environment_name "$target") || return
+
+  ona environment create "$@" --name "$env_name" && ona-ssh
 }
