@@ -465,7 +465,7 @@ For a new OS-specific package (e.g., `tmux-macos` on first tmux divergence): add
 | yazi opens | `yazi/` package |
 | sway reloads without error | `sway/.config/sway/config` |
 
-#### Flow: Fresh-clone → working setup (Mac, day 1 of new job)
+#### Flow: Fresh-clone → working setup (Mac, initial setup)
 
 1. Install Homebrew manually (`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`) — prerequisite. Xcode Command Line Tools are installed as a side effect.
 2. `brew install just stow` (manual prereq; `just` isn't in our deps list).
@@ -702,7 +702,7 @@ alt-f       = 'fullscreen'
 | Risk | Impact | Likelihood | Mitigation |
 |------|--------|------------|------------|
 | Stow conflicts during Fedora migration | Broken shell/editor state mid-flight | Medium | Scratch shell protocol (now step 1 of migration flow); `just plan` dry-run; `just unstow-all` before branch checkout. |
-| Mac work policy / MDM blocks brew or cask | Partial setup; aerospace or ghostty missing | Medium | `install-deps` guards cask installs with `brew list --cask <name> || brew install --cask <name>` to fail on reject, not on already-installed. README documents the `packages/common`-only fallback. |
+| Managed-Mac policy / MDM blocks brew or cask | Partial setup; aerospace or ghostty missing | Medium | `install-deps` guards cask installs with `brew list --cask <name> || brew install --cask <name>` to fail on reject, not on already-installed. README documents the `packages/common`-only fallback. |
 | `.gitkeep` forgotten when adding a new shared-directory package | Stow folds the directory; OS-specific package later fails with a stow error | Low-Medium | Loader Contract (Rule 1) documents the obligation. The failure surfaces at `just stow` time with a clear stow error, not silently. |
 | `brew shellenv` bootstrap fails (no brew on either canonical path) | Mac zsh plugins don't load; `$HOMEBREW_PREFIX` empty | Low | `.zshenv` probes both Apple Silicon and Intel brew paths; `[ -x ... ]` guard means fails silently with no functional change. Plugins silently absent, but shell still works. |
 | tmux `source-file -q` silent-on-typo | A typo'd path silently does nothing | Low | Short filenames + Loader Contract. |

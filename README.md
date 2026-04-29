@@ -1,6 +1,6 @@
 # dotfiles
 
-Public configuration files for my development environment, managed with [GNU Stow](https://www.gnu.org/software/stow/) and `just`. Targets Fedora (sway-based personal box) and macOS (work machine, AeroSpace-based) from a single source tree.
+Public configuration files for my development environment, managed with [GNU Stow](https://www.gnu.org/software/stow/) and `just`. Targets Fedora (sway-based personal box) and macOS (work Mac, AeroSpace-based) from a single source tree.
 
 **This repo is for public configs only.** No secrets, API keys, or private tooling.
 

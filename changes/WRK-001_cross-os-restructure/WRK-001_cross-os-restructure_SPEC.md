@@ -428,7 +428,7 @@ Maps directly to the PRD's "Must Have (Pre-Merge Gate)" success criteria. All it
 - [ ] All phases committed with the `[WRK-001][PN]` prefix.
 - [ ] Code review passes on every phase.
 
-Post-merge (Mac validation, day 1 of new job) — out of scope for this SPEC; tracked per PRD.
+Post-merge (Mac validation, initial setup) — out of scope for this SPEC; tracked per PRD.
 
 ## Execution Log
 
