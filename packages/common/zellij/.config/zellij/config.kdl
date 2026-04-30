@@ -2,8 +2,8 @@
 // Press Ctrl+g to unlock and access zellij bindings.
 default_mode "locked"
 
-// Preserve modified keys like Shift+Enter through remote sessions.
-support_kitty_keyboard_protocol true
+// Open new panes in zsh even when a remote host still reports SHELL=/bin/bash.
+default_shell "zsh"
 
 // Match tmux scrollback (default is 10000)
 scroll_buffer_size 50000

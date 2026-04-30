@@ -128,6 +128,7 @@ setup profile="":
     case "$profile" in
         linux-workstation) just setup-sway-session ;;
         linux-remote)
+            just setup-login-shell
             just setup-ai-dotfiles
             just setup-efs-state
             ;;
@@ -140,6 +141,10 @@ setup-ai-dotfiles:
 # Link selected mutable runtime state into Ona EFS when EFS_MOUNT_POINT is set.
 setup-efs-state:
     ./scripts/setup-efs-state.sh
+
+# Best-effort login shell update for containers that allow passwordless sudo.
+setup-login-shell:
+    bash ./scripts/setup-login-shell.sh
 
 # Resolve+validate+derive profile dispatch context (WRK-002). Single source of
 # truth used by every profile-aware recipe (setup, all, check-conflicts,

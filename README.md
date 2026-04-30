@@ -329,12 +329,18 @@ Before invoking `just setup`, `bootstrap.sh` runs `check-conflicts` and **auto-b
 
 ### Remote shell default
 
-`linux-remote` does not run `chsh`. Remote dev images often keep `/etc/passwd` or login-shell changes outside user control, so the profile instead stows a small `~/.bashrc.d/90-exec-zsh` shim. For interactive TTY bash sessions, it exports `SHELL` to the resolved zsh path and `exec`s zsh. It also stows a remote-only `~/.bash_profile` that sources `~/.profile` first, then `~/.bashrc`, so login bash sessions reach the same shim. Noninteractive `bash -c` commands are left alone.
+`linux-remote` tries to set the user's login shell to zsh with `sudo usermod --shell "$(command -v zsh)" "$USER"` when the remote container allows passwordless sudo. Remote dev images sometimes keep `/etc/passwd` or login-shell changes outside user control, so the profile also stows a small `~/.bashrc.d/90-exec-zsh` fallback shim. For interactive TTY bash sessions, it exports `SHELL` to the resolved zsh path and `exec`s zsh. It also stows a remote-only `~/.bash_profile` that sources `~/.profile` first, then `~/.bashrc`, so login bash sessions reach the same shim. Noninteractive `bash -c` commands are left alone.
 
 Use this when you need to stay in bash:
 
 ```sh
 DOTFILES_KEEP_BASH=1 bash
+```
+
+Skip the login-shell mutation but still install the fallback shim with:
+
+```sh
+DOTFILES_SKIP_LOGIN_SHELL=1 just setup profile=linux-remote
 ```
 
 ### AI dotfiles
@@ -442,6 +448,8 @@ ona-up <project-id> --name investigation
 ```
 
 For every mode, `ona-ssh` exports remote `SHELL` to zsh when zsh exists before launching the shell or multiplexer, so newly-created panes follow the zsh default even if Ona's login shell is still bash. It also forces remote `TERM=xterm-256color` and `COLORTERM=truecolor`. This avoids Ghostty's local `xterm-ghostty` terminfo leaking into remote boxes that do not know that terminal entry.
+
+Plain Ghostty-over-SSH sessions get the same terminal fallback from the Linux zsh config: if `TERM=xterm-ghostty` reaches a remote without the Ghostty terminfo entry, zsh downgrades `TERM` to `xterm-256color` and keeps `COLORTERM=truecolor`.
 
 Useful overrides:
 
