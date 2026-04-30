@@ -329,7 +329,7 @@ Before invoking `just setup`, `bootstrap.sh` runs `check-conflicts` and **auto-b
 
 ### Remote shell default
 
-`linux-remote` does not run `chsh`. Remote dev images often keep `/etc/passwd` or login-shell changes outside user control, so the profile instead stows a small `~/.bashrc.d/90-exec-zsh` shim. For interactive TTY bash sessions, it exports `SHELL` to the resolved zsh path and `exec`s zsh. Noninteractive `bash -c` commands are left alone.
+`linux-remote` does not run `chsh`. Remote dev images often keep `/etc/passwd` or login-shell changes outside user control, so the profile instead stows a small `~/.bashrc.d/90-exec-zsh` shim. For interactive TTY bash sessions, it exports `SHELL` to the resolved zsh path and `exec`s zsh. It also stows a remote-only `~/.bash_profile` that sources `~/.profile` first, then `~/.bashrc`, so login bash sessions reach the same shim. Noninteractive `bash -c` commands are left alone.
 
 Use this when you need to stay in bash:
 
