@@ -268,6 +268,7 @@ EOF
 typeset -ga _ONA_DEV_FORWARD_DEFAULT_PORTS
 _ONA_DEV_FORWARD_DEFAULT_PORTS=(
   # web / frontend
+  8000   # backend dev server
   8080   # web nginx (integration variant) — also serves /_logs
   8081   # web nginx (default variant)
   9000   # frontend dev server (parcel)
