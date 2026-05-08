@@ -371,7 +371,9 @@ Recommended Ona secret:
 EFS_MOUNT_POINT=/home/vscode/.efs
 ```
 
-The script stores mutable state under `$EFS_MOUNT_POINT/state` and symlinks only selected runtime paths:
+The script stores mutable state under `$EFS_MOUNT_POINT/state` and symlinks two categories of paths.
+
+Runtime state — sessions, history, agent memory:
 
 ```text
 ~/.claude.json       -> $EFS_MOUNT_POINT/state/claude/.claude.json
@@ -385,15 +387,26 @@ The script stores mutable state under `$EFS_MOUNT_POINT/state` and symlinks only
 ~/.zsh_history      -> $EFS_MOUNT_POINT/state/shell/zsh_history
 ```
 
+Revocable per-user auth tokens — avoids re-login on every new instance:
+
+```text
+~/.claude/.credentials.json -> $EFS_MOUNT_POINT/state/claude/.credentials.json
+~/.codex/auth.json          -> $EFS_MOUNT_POINT/state/codex/auth.json
+~/.config/gh                -> $EFS_MOUNT_POINT/state/gh
+~/.config/acli              -> $EFS_MOUNT_POINT/state/acli
+```
+
+Only enable the auth-token block when the EFS volume is dedicated to a single user. Long-lived static credentials (cloud access keys, service-account JSON, SSH private keys, kube configs that reach production) stay machine-local regardless.
+
 Agent config that belongs in Git stays managed by `ai-dotfiles` (`~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`, `~/.agents/skills`). EFS is only for runtime state such as `/vim` mode, old Claude sessions, todos, agent histories, and shell history.
 
-Codex follows the same rule: config, rules, memories, prompt history, and old sessions are shared; auth tokens, caches, logs, plugin caches, and SQLite runtime databases stay local to each machine. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
+Codex follows the same rule: config, rules, memories, prompt history, and old sessions are shared; caches, logs, plugin caches, and SQLite runtime databases stay local to each machine. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
 
 EFS guardrails:
 
 - Do not mount EFS over `$HOME` by default. Prefer `EFS_MOUNT_POINT=/home/vscode/.efs` and explicit symlinks.
 - Do not put source-controlled config in EFS. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`.
-- Do not put secrets in EFS. Keep API keys, OAuth tokens, SSH keys, and app auth files in Ona secrets or machine-local storage.
+- Keep long-lived static credentials out of EFS — cloud access keys, service-account JSON, SSH private keys, and kube configs that reach production stay machine-local or in Ona secrets. Revocable per-user OAuth tokens for dev tooling may be linked, but only when the EFS volume is dedicated to a single user.
 - Do not share dependency caches or runtime databases unless there is a proven need. Keep package caches, plugin caches, logs, `node_modules`, virtualenvs, and SQLite/WAL files local.
 - Add new agents conservatively: identify their config paths, runtime-state paths, auth paths, and cache paths first, then link only the state worth preserving.
 

@@ -144,3 +144,9 @@ link_dir_state "$HOME/.codex/rules" "$state_root/codex/rules"
 link_dir_state "$HOME/.codex/sessions" "$state_root/codex/sessions"
 
 link_file_state "$HOME/.zsh_history" "$state_root/shell/zsh_history" empty
+
+# Revocable per-user OAuth tokens — avoid re-login churn. Long-lived static creds stay local; see README.
+link_file_state "$HOME/.claude/.credentials.json" "$state_root/claude/.credentials.json" empty
+link_file_state "$HOME/.codex/auth.json" "$state_root/codex/auth.json" empty
+link_dir_state "$HOME/.config/gh" "$state_root/gh"
+link_dir_state "$HOME/.config/acli" "$state_root/acli"
