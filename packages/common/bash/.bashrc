@@ -24,6 +24,4 @@ if [ -d ~/.bashrc.d ]; then
 fi
 unset rc
 
-alias clauded='claude --dangerously-skip-permissions'
-
 [ -r "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
