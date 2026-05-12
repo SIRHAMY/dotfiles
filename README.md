@@ -365,13 +365,47 @@ DOTFILES_SKIP_AI_DOTFILES=1    # skip AI dotfiles entirely
 
 `linux-remote` also runs `just setup-efs-state`. This is optional: if `EFS_MOUNT_POINT` is unset, missing, or not mounted, setup keeps using local runtime state and continues.
 
-Recommended Ona secret:
+There are two supported modes. Pick one via the `EFS_MOUNT_POINT` Ona secret.
+
+#### Mode A — share-everything (recommended)
+
+```sh
+EFS_MOUNT_POINT=/home/vscode
+```
+
+Ona mounts the EFS volume directly over `$HOME` and auto-syncs the prebuilt home into it on first boot (up to ~30 minutes). Everything in `$HOME` is then shared across all your Ona instances by default — shell history, dotfiles state, agent sessions, gitconfig, anything new tools drop under `$HOME` going forward.
+
+`setup-efs-state` then creates exclude symlinks from `$HOME/<path>` to `/prebuilt-home/<path>` for paths that must NOT live on EFS. The exclude list:
+
+```text
+# Build/dependency caches — large, rebuildable, sometimes per-arch.
+~/.cache, ~/.npm, ~/.yarn, ~/.pnpm-store, ~/.cargo, ~/.rustup, ~/go,
+~/.gradle, ~/.m2, ~/.local/share/uv, ~/.local/share/virtualenvs
+
+# IDE / language-server state — machine-specific, large.
+~/.vscode-server, ~/.vscode-server-insiders, ~/.cursor-server
+
+# Local daemon state — tied to the local Docker daemon.
+~/.docker
+
+# Long-lived static credentials — kept machine-local per security policy.
+~/.aws, ~/.ssh, ~/.kube, ~/.config/gcloud
+
+# Dotfiles checkouts — prebuilt clone wins over any EFS snapshot.
+$DOTFILES_DIR (auto-detected), $AI_DOTFILES_DIR
+```
+
+Override the list with `DOTFILES_EFS_EXCLUDES=path1,path2,...` (replaces defaults) or extend it with `DOTFILES_EFS_EXTRA_EXCLUDES=path3,path4` (appends). Paths are relative to `$HOME`.
+
+Mode A requires `/prebuilt-home` to exist (Ona provides this). On non-Ona hosts the script logs and exits.
+
+#### Mode B — selective (more conservative)
 
 ```sh
 EFS_MOUNT_POINT=/home/vscode/.efs
 ```
 
-The script stores mutable state under `$EFS_MOUNT_POINT/state` and symlinks two categories of paths.
+EFS is mounted at a subdirectory, not over `$HOME`. Only the paths listed below are symlinked into EFS; nothing else is shared.
 
 Runtime state — sessions, history, agent memory:
 
@@ -402,40 +436,65 @@ Agent config that belongs in Git stays managed by `ai-dotfiles` (`~/.claude/comm
 
 Codex follows the same rule: config, rules, memories, prompt history, and old sessions are shared; caches, logs, plugin caches, and SQLite runtime databases stay local to each machine. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
 
-EFS guardrails:
+#### EFS guardrails (both modes)
 
-- Do not mount EFS over `$HOME` by default. Prefer `EFS_MOUNT_POINT=/home/vscode/.efs` and explicit symlinks.
-- Do not put source-controlled config in EFS. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`.
+- Do not put source-controlled config in EFS. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`. In Mode A, the dotfiles checkouts are auto-excluded for the same reason.
 - Keep long-lived static credentials out of EFS — cloud access keys, service-account JSON, SSH private keys, and kube configs that reach production stay machine-local or in Ona secrets. Revocable per-user OAuth tokens for dev tooling may be linked, but only when the EFS volume is dedicated to a single user.
-- Do not share dependency caches or runtime databases unless there is a proven need. Keep package caches, plugin caches, logs, `node_modules`, virtualenvs, and SQLite/WAL files local.
-- Add new agents conservatively: identify their config paths, runtime-state paths, auth paths, and cache paths first, then link only the state worth preserving.
+- Do not share dependency caches or runtime databases unless there is a proven need. Keep package caches, plugin caches, logs, `node_modules`, virtualenvs, and SQLite/WAL files local. Mode A auto-excludes the common offenders.
+- Add new agents conservatively: identify their config paths, runtime-state paths, auth paths, and cache paths first, then decide whether the state is worth preserving — and in Mode A, whether anything needs an exclude.
 
-Useful overrides:
+#### Useful overrides
 
 ```sh
-DOTFILES_EFS_STATE_ROOT=/some/efs/path/state
-DOTFILES_SKIP_EFS_STATE=1
-DOTFILES_EFS_ALLOW_UNMOUNTED=1    # local testing only
+DOTFILES_EFS_STATE_ROOT=/some/efs/path/state         # Mode B: override default state path
+DOTFILES_EFS_EXCLUDES=path1,path2                    # Mode A: replace default exclude list
+DOTFILES_EFS_EXTRA_EXCLUDES=path3,path4              # Mode A: append to default exclude list
+DOTFILES_PREBUILT_HOME=/some/other/prebuilt-home     # Mode A: override exclude target root
+DOTFILES_SKIP_EFS_STATE=1                            # skip the script entirely
+DOTFILES_EFS_ALLOW_UNMOUNTED=1                       # local testing only
 ```
 
-Rollback a selective EFS link by removing the symlink and moving the stored state back from EFS. Example for Claude projects:
+#### Rollback
+
+Mode B — undo a selective link by removing the symlink and moving the stored state back from EFS:
 
 ```sh
 rm ~/.claude/projects
 mv "$EFS_MOUNT_POINT/state/claude/projects" ~/.claude/projects
 ```
 
-Repeat the same pattern for the path you want to localize again. If setup backed up a conflicting local path, restore the matching `*.pre-efs.<timestamp>.bak` file or directory instead:
+Mode A — undo an exclude by removing the symlink to `/prebuilt-home/<path>` and either restoring a backup or letting the path repopulate from prebuilt:
 
 ```sh
-mv ~/.claude/projects.pre-efs.<timestamp>.bak ~/.claude/projects
+rm ~/.cache
+# either: cp -a /prebuilt-home/.cache ~/.cache
+# or: restore the matching ~/.cache.pre-efs.<timestamp>.bak created at first run
 ```
+
+If setup backed up a conflicting path during a mode switch, restore from the timestamped `.pre-efs.<timestamp>.bak`.
 
 To disable all future EFS linking on a machine, unset `EFS_MOUNT_POINT` or run setup with:
 
 ```sh
 DOTFILES_SKIP_EFS_STATE=1 just setup profile=linux-remote
 ```
+
+#### Switching from Mode B to Mode A
+
+Flipping `EFS_MOUNT_POINT` from `/home/vscode/.efs` to `/home/vscode` reuses the same EFS volume but remounts it over `$HOME`. The previously selectively-linked state (Claude projects, codex sessions, zsh history, etc.) will appear under `~/state/...` on the new mount instead of at its natural home-dir location. One-time migration after first boot on the new mount:
+
+```sh
+# Move runtime state into natural home-dir locations.
+for sub in claude codex shell gh acli; do
+  [ -d ~/state/$sub ] && cp -an ~/state/$sub/. ~/  # adjust per layout
+done
+# Or, more conservatively, move specific paths:
+mv ~/state/claude/projects ~/.claude/projects
+mv ~/state/shell/zsh_history ~/.zsh_history
+# ...etc, then `rm -rf ~/state` once verified.
+```
+
+After migration, `setup-efs-state` running in Mode A will detect the natural paths and leave them in place.
 
 ### Ona helpers
 

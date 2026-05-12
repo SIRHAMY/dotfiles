@@ -13,11 +13,7 @@ fi
 
 mount_point="${EFS_MOUNT_POINT%/}"
 state_root="${DOTFILES_EFS_STATE_ROOT:-$mount_point/state}"
-
-if [ "$mount_point" = "$HOME" ]; then
-  echo "setup-efs-state: EFS is mounted at HOME; no selective state links needed."
-  exit 0
-fi
+prebuilt_home="${DOTFILES_PREBUILT_HOME:-/prebuilt-home}"
 
 if [ ! -d "$mount_point" ]; then
   echo "setup-efs-state: $mount_point does not exist; using local runtime state." >&2
@@ -130,6 +126,111 @@ link_dir_state() {
     echo "setup-efs-state: linked $local_path -> $efs_path"
   fi
 }
+
+exclude_from_efs() {
+  local rel="$1"
+  rel="${rel#/}"
+  local home_path="$HOME/$rel"
+  local prebuilt_path="$prebuilt_home/$rel"
+
+  if [ -L "$home_path" ]; then
+    local target
+    target="$(readlink "$home_path")"
+    if [ "$target" = "$prebuilt_path" ]; then
+      echo "setup-efs-state: $home_path already excluded -> $prebuilt_path"
+      return
+    fi
+    echo "setup-efs-state: $home_path is a symlink to $target; leaving it unchanged." >&2
+    return
+  fi
+
+  if ! mkdir -p "$prebuilt_path" 2>/dev/null; then
+    echo "setup-efs-state: cannot create $prebuilt_path; skipping exclude for $home_path" >&2
+    return
+  fi
+
+  if [ -e "$home_path" ]; then
+    if [ -d "$home_path" ] && is_empty_dir "$home_path"; then
+      rmdir "$home_path"
+    else
+      backup_path "$home_path"
+    fi
+  fi
+
+  mkdir -p "$(dirname "$home_path")"
+  ln -s "$prebuilt_path" "$home_path"
+  echo "setup-efs-state: excluded $home_path -> $prebuilt_path"
+}
+
+if [ "$mount_point" = "$HOME" ]; then
+  if [ ! -d "$prebuilt_home" ]; then
+    echo "setup-efs-state: EFS mounted at HOME but $prebuilt_home is missing; cannot set up exclusions." >&2
+    echo "setup-efs-state: set DOTFILES_PREBUILT_HOME or remount EFS off of HOME." >&2
+    exit 0
+  fi
+
+  # Curated default excludes — paths that should NOT live on EFS.
+  # Grouped by reason so future edits stay legible.
+  default_excludes=(
+    # Build/dependency caches — large, rebuildable, sometimes per-arch.
+    ".cache"
+    ".npm"
+    ".yarn"
+    ".pnpm-store"
+    ".cargo"
+    ".rustup"
+    "go"
+    ".gradle"
+    ".m2"
+    ".local/share/uv"
+    ".local/share/virtualenvs"
+
+    # IDE / language-server state — machine-specific, large.
+    ".vscode-server"
+    ".vscode-server-insiders"
+    ".cursor-server"
+
+    # Local daemon state — tied to the local Docker/etc daemon.
+    ".docker"
+
+    # Long-lived static credentials — must stay machine-local per security
+    # policy. See README "EFS guardrails" for the rationale.
+    ".aws"
+    ".ssh"
+    ".kube"
+    ".config/gcloud"
+  )
+
+  if [ -n "${DOTFILES_EFS_EXCLUDES:-}" ]; then
+    IFS=',' read -r -a excludes <<< "$DOTFILES_EFS_EXCLUDES"
+  else
+    excludes=("${default_excludes[@]}")
+  fi
+
+  if [ -n "${DOTFILES_EFS_EXTRA_EXCLUDES:-}" ]; then
+    IFS=',' read -r -a extras <<< "$DOTFILES_EFS_EXTRA_EXCLUDES"
+    excludes+=("${extras[@]}")
+  fi
+
+  # Dotfiles checkouts get excluded so the prebuilt clone wins over whatever
+  # snapshot happens to be on EFS. Auto-detect any checkout under $HOME.
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  dotfiles_dir="$(cd "$script_dir/.." && pwd)"
+  if [[ "$dotfiles_dir" == "$HOME/"* ]]; then
+    excludes+=("${dotfiles_dir#$HOME/}")
+  fi
+  ai_dotfiles_dir="${AI_DOTFILES_DIR:-$HOME/Code/ai-dotfiles}"
+  if [[ "$ai_dotfiles_dir" == "$HOME/"* ]]; then
+    excludes+=("${ai_dotfiles_dir#$HOME/}")
+  fi
+
+  for rel in "${excludes[@]}"; do
+    [ -z "$rel" ] && continue
+    exclude_from_efs "$rel"
+  done
+
+  exit 0
+fi
 
 mkdir -p "$state_root/claude" "$state_root/codex" "$state_root/shell" "$HOME/.claude"
 
