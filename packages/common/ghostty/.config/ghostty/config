@@ -51,6 +51,10 @@
 theme = terminal-garden
 window-theme = ghostty
 
+# Shift+Enter sends a literal newline so it survives SSH + multiplexers
+# (zellij over Ona SSH) where kitty keyboard protocol negotiation breaks down.
+keybind = shift+enter=text:\n
+
 # Tab navigation: ctrl+shift+N to jump to tab N
 keybind = ctrl+shift+one=goto_tab:1
 keybind = ctrl+shift+two=goto_tab:2
