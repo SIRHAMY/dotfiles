@@ -17,5 +17,4 @@ bindkey '^[[B' history-beginning-search-forward    # down-arrow = history search
 
 # --- Useful defaults ---
 setopt AUTO_CD          # type a directory name to cd into it
-setopt CORRECT          # suggest corrections for typos
 setopt GLOB_DOTS        # include dotfiles in glob patterns
