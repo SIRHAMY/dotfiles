@@ -292,6 +292,7 @@ install-deps-linux-workstation:
     just install-resvg
     just install-flatpaks
     just install-handy
+    just install-cliphist
 
 # Install dependencies for the linux-remote profile (apt or dnf, CLI-only set,
 # no GRUB/NVIDIA/flatpak/sway). Detects the package manager at runtime; fails
@@ -550,6 +551,37 @@ install-handy:
     curl -fsSL -o "$tmpdir/${rpm_name}" "$url"
     sudo dnf install -y "$tmpdir/${rpm_name}"
     echo "handy installed."
+
+# Install cliphist (clipboard history manager) from GitHub release. Release
+# artifacts are bare binaries named v<ver>-linux-<arch> (no archive). Skip-if-
+# installed matches the gh/handy pattern.
+[private]
+install-cliphist:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v cliphist >/dev/null; then
+        echo "cliphist already installed, skipping."
+        exit 0
+    fi
+    echo "Installing cliphist from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    case "$(uname -m)" in
+        x86_64)  cliphist_arch=amd64 ;;
+        aarch64) cliphist_arch=arm64 ;;
+        *) echo "Unsupported arch for cliphist: $(uname -m)" >&2; exit 1 ;;
+    esac
+    version=$(curl -fsSL "https://api.github.com/repos/sentriz/cliphist/releases/latest" \
+        | grep -oE '"tag_name": *"v[^"]+"' | head -n1 | sed -E 's/.*"v([^"]+)".*/\1/')
+    if [ -z "$version" ]; then
+        echo "Failed to resolve cliphist latest version from GitHub API." >&2
+        exit 1
+    fi
+    url="https://github.com/sentriz/cliphist/releases/download/v${version}/v${version}-linux-${cliphist_arch}"
+    echo "Downloading $url"
+    curl -fsSL "$url" -o "$local_bin/cliphist"
+    chmod 755 "$local_bin/cliphist"
+    echo "cliphist installed to $local_bin/cliphist"
 
 # Install flatpak apps
 [private]

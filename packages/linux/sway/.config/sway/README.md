@@ -103,7 +103,8 @@ Two options: resize mode for fine-tuning, or direct bindings for quick adjustmen
 | Key | Action |
 |-----|--------|
 | `$mod+p` | Zellij sessionizer (floating) |
-| `$mod+v` | Clipboard history (requires cliphist) |
+| `$mod+v` | Clipboard history (cliphist) |
+| `$mod+F1` | Voice dictation toggle (Handy) |
 
 ## Modifier Key Philosophy
 
@@ -145,7 +146,7 @@ All modules use Font Awesome 6 icons. Hover for tooltips with detailed info.
 - **wofi** - app launcher
 - **grim** + **slurp** - screenshots
 - **wl-clipboard** (`wl-copy`) - clipboard
-- **cliphist** - clipboard history (needs manual install)
+- **cliphist** - clipboard history (installed by `just install-cliphist`)
 - **swaylock** - lock screen
 - **swayidle** - idle management
 - **brightnessctl** - brightness control

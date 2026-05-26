@@ -208,7 +208,10 @@ bindsym $mod+r mode "resize"
     bindsym $mod+Escape exec swaylock
 
 # Clipboard history (requires cliphist + wl-clipboard)
-    bindsym $mod+v exec cliphist list | wofi --dmenu | cliphist decode | wl-copy
+# Guarded against empty selection — dismissing wofi without picking must not
+# pipe an empty value through `wl-copy` and clobber the current clipboard.
+# cliphist installed under $HOME/.local/bin, which is not on sway's exec PATH.
+    bindsym $mod+v exec sh -c 'sel=$("$HOME/.local/bin/cliphist" list | wofi --dmenu); [ -n "$sel" ] && printf "%s" "$sel" | "$HOME/.local/bin/cliphist" decode | wl-copy'
 
 # Zellij sessionizer
     bindsym $mod+p exec ghostty --class=floating-launcher -e ~/.local/bin/zellij-sessionizer
@@ -219,6 +222,6 @@ exec eval $(gnome-keyring-daemon --start --components=secrets)
 exec waybar
 exec mako
 exec dropbox start -i
-exec wl-paste --watch cliphist store
+exec wl-paste --watch $HOME/.local/bin/cliphist store
 
 include /etc/sway/config.d/*
