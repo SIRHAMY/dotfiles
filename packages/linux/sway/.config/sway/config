@@ -154,7 +154,7 @@ input * xkb_options caps:escape_shifted_capslock
     for_window [app_id="obsidian"] move scratchpad, resize set 1400 900, move position center
 
 # Voice dictation (Handy)
-    bindsym $mod+o exec handy --toggle-transcription
+    bindsym $mod+F1 exec handy --toggle-transcription
 
 # Scratchpad
     bindsym $mod+Shift+grave move scratchpad
