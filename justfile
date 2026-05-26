@@ -281,7 +281,7 @@ install-deps-linux-workstation:
     # Enable COPR repos for packages not in default Fedora repos
     sudo dnf copr enable atim/lazygit -y
     deps=(stow zsh zoxide fzf tmux neovim fd-find lazygit sway swaylock swayidle waybar mako wofi \
-          grim slurp wl-clipboard brightnessctl playerctl \
+          grim slurp wl-clipboard wtype brightnessctl playerctl gtk-layer-shell \
           zsh-autosuggestions zsh-syntax-highlighting \
           ibm-plex-sans-fonts ibm-plex-mono-fonts \
           NetworkManager-tui gnome-keyring flatpak)
@@ -291,6 +291,7 @@ install-deps-linux-workstation:
     just install-yazi
     just install-resvg
     just install-flatpaks
+    just install-handy
 
 # Install dependencies for the linux-remote profile (apt or dnf, CLI-only set,
 # no GRUB/NVIDIA/flatpak/sway). Detects the package manager at runtime; fails
@@ -516,6 +517,39 @@ install-gh:
     curl -fsSL "$url" | tar -xz -C "$tmpdir"
     install -m 755 "$tmpdir/gh_${version}_linux_${gh_arch}/bin/gh" "$local_bin/gh"
     echo "gh installed to $local_bin/gh"
+
+# Install Handy speech-to-text from GitHub release. Handy ships signed .rpm
+# packages; install via dnf so the desktop entry and /usr/bin/handy land in the
+# normal places. Skip-if-installed matches the lazygit/gh pattern — manual
+# `sudo dnf remove Handy && just install-handy` to bump versions.
+[private]
+install-handy:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v handy >/dev/null; then
+        echo "handy already installed, skipping."
+        exit 0
+    fi
+    echo "Installing Handy from GitHub release..."
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64|aarch64) ;;
+        *) echo "Unsupported arch for handy: $arch" >&2; exit 1 ;;
+    esac
+    version=$(curl -fsSL "https://api.github.com/repos/cjpais/Handy/releases/latest" \
+        | grep -oE '"tag_name": *"v[^"]+"' | head -n1 | sed -E 's/.*"v([^"]+)".*/\1/')
+    if [ -z "$version" ]; then
+        echo "Failed to resolve Handy latest version from GitHub API." >&2
+        exit 1
+    fi
+    rpm_name="Handy-${version}-1.${arch}.rpm"
+    url="https://github.com/cjpais/Handy/releases/download/v${version}/${rpm_name}"
+    echo "Downloading $url"
+    curl -fsSL -o "$tmpdir/${rpm_name}" "$url"
+    sudo dnf install -y "$tmpdir/${rpm_name}"
+    echo "handy installed."
 
 # Install flatpak apps
 [private]
