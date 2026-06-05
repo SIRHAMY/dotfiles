@@ -298,6 +298,7 @@ Usage: ona-dev-forward [environment-id] [extra-port ...]
 
 Forward common dev ports from a running Ona environment to localhost.
 With no environment-id, fzf-pick from running envs (same picker as ona-ssh).
+An environment-id may be a full or unique partial ID.
 
 Defaults: ${_ONA_DEV_FORWARD_DEFAULT_PORTS[*]}
 
@@ -325,9 +326,11 @@ EOF
     return 127
   }
 
-  # First positional is treated as an env-id only when it looks like a UUID;
-  # everything else is treated as an extra port spec.
-  if [[ -n "${1:-}" && "$1" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+  # First positional is an env-id (full or partial, like ona-ssh) unless it is
+  # port-shaped (PORT or LOCAL:REMOTE). Pure-numeric tokens are always ports, so
+  # an all-digit env-id prefix can't be distinguished — paste a hyphen or use the
+  # picker for those. With no env-id, fall through to the fzf picker below.
+  if [[ -n "${1:-}" && ! "$1" =~ ^[0-9]+(:[0-9]+)?$ ]]; then
     env_id="$1"
     shift
   fi
