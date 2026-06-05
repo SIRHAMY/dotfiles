@@ -345,7 +345,7 @@ DOTFILES_SKIP_LOGIN_SHELL=1 just setup profile=linux-remote
 
 ### AI dotfiles
 
-`linux-remote` also runs `just setup-ai-dotfiles` after the base CLI setup. It clones or updates the private AI config repo, then runs that repo's `just link` so Claude config and cross-harness skills are sourced from Git instead of copied by hand.
+`linux-remote` also runs `just setup-ai-dotfiles` after the base CLI setup. It clones or updates the private AI config repo, then runs that repo's `just link` so home-level AI instructions, Claude config, and cross-harness skills are sourced from Git instead of copied by hand.
 
 Defaults:
 
