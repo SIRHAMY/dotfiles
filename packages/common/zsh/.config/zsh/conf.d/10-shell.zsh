@@ -18,3 +18,6 @@ bindkey '^[[B' history-beginning-search-forward    # down-arrow = history search
 # --- Useful defaults ---
 setopt AUTO_CD          # type a directory name to cd into it
 setopt GLOB_DOTS        # include dotfiles in glob patterns
+
+# --- Identity ---
+export GITHUB_USER=SIRHAMY   # public handle; read by scripts that build GitHub URLs
