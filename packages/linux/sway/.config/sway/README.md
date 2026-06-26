@@ -104,7 +104,7 @@ Two options: resize mode for fine-tuning, or direct bindings for quick adjustmen
 |-----|--------|
 | `$mod+p` | Zellij sessionizer (floating) |
 | `$mod+v` | Clipboard history (cliphist) |
-| `$mod+F1` | Voice dictation toggle (Handy) |
+| `$mod+a` | Voice dictation toggle (Handy) |
 
 ## Modifier Key Philosophy
 
