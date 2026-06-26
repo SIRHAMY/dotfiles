@@ -146,7 +146,6 @@ input * xkb_options caps:escape_shifted_capslock
     bindsym $mod+f fullscreen
     bindsym $mod+Shift+space floating toggle
     bindsym $mod+space focus mode_toggle
-    bindsym $mod+a focus parent
     bindsym $mod+Shift+s sticky toggle
 
 # Obsidian scratchpad (toggle with mod+n)
@@ -154,7 +153,7 @@ input * xkb_options caps:escape_shifted_capslock
     for_window [app_id="obsidian"] move scratchpad, resize set 1400 900, move position center
 
 # Voice dictation (Handy)
-    bindsym $mod+F1 exec handy --toggle-transcription
+    bindsym $mod+a exec handy --toggle-transcription
 
 # Scratchpad
     bindsym $mod+Shift+grave move scratchpad
