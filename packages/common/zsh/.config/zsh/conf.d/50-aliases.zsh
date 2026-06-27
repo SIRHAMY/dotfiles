@@ -2,3 +2,4 @@
 alias codexd='codex --dangerously-bypass-approvals-and-sandbox'
 alias zls='zellij list-sessions'
 alias za='zellij attach'
+alias zdev='zellij -l dev'
