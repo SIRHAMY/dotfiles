@@ -590,7 +590,8 @@ install-flatpaks:
     set -euo pipefail
     flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     flatpak install -y flathub md.obsidian.Obsidian
-    flatpak override --user --socket=wayland md.obsidian.Obsidian
+    # Force XWayland: native Wayland render path crashes on Nvidia (window never maps)
+    flatpak override --user --nosocket=wayland md.obsidian.Obsidian
     echo "Flatpak apps installed."
 
 # Install sway session entry (auto-detects NVIDIA at login time)
