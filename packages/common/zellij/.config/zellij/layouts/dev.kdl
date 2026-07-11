@@ -8,22 +8,19 @@ layout {
             plugin location="zellij:status-bar"
         }
     }
-    tab name="term" focus=true {
-        pane split_direction="vertical" {
-            pane
-            pane
-        }
-    }
-    tab name="code" {
+    tab name="tab 1" focus=true {
         pane
     }
-    tab name="bgterm" {
-        pane split_direction="vertical" {
-            pane
-            pane split_direction="horizontal" {
-                pane
-                pane
-            }
-        }
+    tab name="tab 2" {
+        pane
+    }
+    tab name="tab 3" {
+        pane
+    }
+    tab name="tab 4" {
+        pane
+    }
+    tab name="tab 5" {
+        pane
     }
 }
