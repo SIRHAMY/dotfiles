@@ -290,6 +290,7 @@ install-deps-linux-workstation:
     just install-zellij
     just install-yazi
     just install-resvg
+    just install-codex
     just install-flatpaks
     just install-handy
     just install-cliphist
@@ -320,6 +321,7 @@ install-deps-linux-remote:
     just install-yazi
     just install-lazygit
     just install-gh
+    just install-codex
 
 # Install dependencies for the mac-workstation profile (Homebrew). Profile-blind:
 # assumes it is being invoked on a Darwin host. Body lifted from the Darwin
@@ -531,6 +533,40 @@ install-gh:
     curl -fsSL "$url" | tar -xz -C "$tmpdir"
     install -m 755 "$tmpdir/gh_${version}_linux_${gh_arch}/bin/gh" "$local_bin/gh"
     echo "gh installed to $local_bin/gh"
+
+# Install codex (OpenAI's coding agent CLI) from prebuilt binary. Codex ships a
+# statically-linked musl binary per release; the tarball extracts to a single
+# arch-triple-named executable that we rename to `codex` on install. Global
+# config is source-controlled separately in ai-dotfiles (.codex/config.toml).
+[private]
+install-codex:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v codex >/dev/null; then
+        echo "codex already installed, skipping."
+        exit 0
+    fi
+    echo "Installing codex from GitHub release..."
+    local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    case "$(uname -m)" in
+        x86_64)  triple=x86_64-unknown-linux-musl ;;
+        aarch64) triple=aarch64-unknown-linux-musl ;;
+        *) echo "Unsupported arch for codex: $(uname -m)" >&2; exit 1 ;;
+    esac
+    url="https://github.com/openai/codex/releases/latest/download/codex-${triple}.tar.gz"
+    echo "Downloading $url"
+    curl -fsSL "$url" | tar -xz -C "$tmpdir"
+    binary=$(find "$tmpdir" -maxdepth 1 -type f -name "codex-${triple}*" | head -n1)
+    if [ -z "$binary" ]; then
+        echo "Failed to locate extracted codex binary in $tmpdir." >&2
+        exit 1
+    fi
+    install -m 755 "$binary" "$local_bin/codex"
+    echo "codex installed to $local_bin/codex"
+    "$local_bin/codex" --version
 
 # Install Handy speech-to-text from GitHub release. Handy ships signed .rpm
 # packages; install via dnf so the desktop entry and /usr/bin/handy land in the
