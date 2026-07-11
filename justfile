@@ -347,15 +347,27 @@ install-deps-mac-workstation:
     # no-op if it's already running.
     brew services start sketchybar
 
-# Install zellij from prebuilt binary
+# Install zellij from prebuilt binary. 0.44.0 added --tab-id/--pane-id to
+# rename-tab, which the agent tab-status hooks rely on to paint background tabs.
 [private]
 install-zellij:
     #!/usr/bin/env bash
     set -euo pipefail
+
+    minimum_version="0.44.0"
     if command -v zellij >/dev/null; then
-        echo "zellij already installed, skipping."
-        exit 0
+        current_version="$(zellij --version | sed -n '1s/^zellij \([0-9][0-9.]*\).*/\1/p')"
+        if [[ "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            major="${BASH_REMATCH[1]}"
+            minor="${BASH_REMATCH[2]}"
+            if (( major > 0 || minor >= 44 )); then
+                echo "zellij $current_version already installed, skipping."
+                exit 0
+            fi
+        fi
+        echo "zellij ${current_version:-unknown} is older than $minimum_version, installing release binary."
     fi
+
     echo "Installing zellij from GitHub release..."
     local_bin="$HOME/.local/bin"
     mkdir -p "$local_bin"
@@ -367,6 +379,7 @@ install-zellij:
     curl -fsSL "$url" | tar -xz -C "$tmpdir"
     install -m 755 "$tmpdir/zellij" "$local_bin/zellij"
     echo "zellij installed to $local_bin/zellij"
+    "$local_bin/zellij" --version
 
 # Install yazi from prebuilt binary
 [private]
