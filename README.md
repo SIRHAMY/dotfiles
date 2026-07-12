@@ -354,6 +354,8 @@ AI_DOTFILES_REPO=git@github.com:SIRHAMY/ai-dotfiles.git
 AI_DOTFILES_DIR=$HOME/Code/ai-dotfiles
 ```
 
+Re-running `just setup` (or `just setup-ai-dotfiles`) is the reconcile path on an existing machine: it re-runs ai-dotfiles' `just link`, which is idempotent and picks up any managed paths added there since this host was last linked. A machine linked before a new hook/command/config was added to ai-dotfiles won't have it — and the drift is silent (a wired hook just no-ops) — until setup runs again.
+
 If the checkout exists and is clean, setup runs `git pull --ff-only`. If it has local changes, setup skips the pull and links the current checkout so local work is not overwritten. Useful overrides:
 
 ```sh
