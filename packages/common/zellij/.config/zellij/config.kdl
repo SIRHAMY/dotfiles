@@ -72,6 +72,8 @@ keybinds clear-defaults=true {
         bind "Alt l" { MoveFocusOrTab "right"; }
         bind "Alt j" { MoveFocus "down"; }
         bind "Alt k" { MoveFocus "up"; }
+        bind "Alt Shift h" { MoveTab "left"; }
+        bind "Alt Shift l" { MoveTab "right"; }
         bind "Alt left" { MoveFocusOrTab "left"; }
         bind "Alt right" { MoveFocusOrTab "right"; }
         bind "Alt down" { MoveFocus "down"; }
@@ -234,6 +236,8 @@ keybinds clear-defaults=true {
         bind "Alt j" { MoveFocus "down"; }
         bind "Alt k" { MoveFocus "up"; }
         bind "Alt l" { MoveFocusOrTab "right"; }
+        bind "Alt Shift h" { MoveTab "left"; }
+        bind "Alt Shift l" { MoveTab "right"; }
         bind "Alt n" { NewPane; }
         bind "Alt o" { MoveTab "right"; }
         bind "Alt p" { TogglePaneInGroup; }
