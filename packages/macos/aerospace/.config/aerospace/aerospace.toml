@@ -18,11 +18,14 @@ default-root-container-orientation = 'auto'
 
 automatically-unhide-macos-hidden-apps = false
 
-# Ghostty uses macOS native tabs, which macOS exposes as separate windows to
-# tiling WMs. Float those records so tabs don't consume extra tile slots.
+# Tile Ghostty like any other app (per Ghostty's tiling-WM guidance). Floating
+# left it stacking behind tiled windows, and AeroSpace can't force floating
+# windows on top (macOS API limit, AeroSpace issue #4). Native tabs still each
+# report as a separate window, so a cmd-T tab becomes its own tile; we lean on
+# zellij instead of native tabs, so that's rare.
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
-run = ['layout floating']
+run = ['layout tiling']
 
 # Reserve 28px at the top so tiled windows don't sit under SketchyBar.
 # Must match the `--bar height` in sketchybar/.config/sketchybar/sketchybarrc.
