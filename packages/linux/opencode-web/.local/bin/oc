@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+opencode_bin="${HOME:-}/.opencode/bin/opencode"
+server_env="${HOME:-}/.config/opencode/server.env"
+health_url="http://127.0.0.1:4096/global/health"
+health_attempts=30
+curl_config=""
+
+fail() {
+  echo "oc: $*" >&2
+  exit 1
+}
+
+require_command() {
+  local command_name="$1"
+
+  command -v "$command_name" >/dev/null 2>&1 || fail "missing required command '$command_name'."
+}
+
+verify_opencode() {
+  if [ ! -f "$opencode_bin" ] || [ ! -x "$opencode_bin" ]; then
+    fail "expected executable OpenCode binary at $opencode_bin."
+  fi
+}
+
+verify_tailscale() {
+  local tailscale_status
+
+  if ! tailscale_status="$(tailscale status --json 2>/dev/null)"; then
+    fail "Tailscale is unavailable; connect it and rerun."
+  fi
+
+  if [[ ! "$tailscale_status" =~ \"BackendState\"[[:space:]]*:[[:space:]]*\"Running\" ]]; then
+    fail "Tailscale is disconnected; connect it and rerun."
+  fi
+}
+
+verify_private_environment() {
+  local environment_mode
+  local environment_owner
+
+  if [ -L "$server_env" ] || [ ! -f "$server_env" ]; then
+    fail "private environment file must be a regular file, not a symlink: $server_env."
+  fi
+
+  environment_mode="$(stat -c '%a' -- "$server_env")" || fail "could not inspect private environment file: $server_env."
+  environment_owner="$(stat -c '%u' -- "$server_env")" || fail "could not inspect private environment file: $server_env."
+
+  case "$environment_mode" in
+    ''|*[!0-7]*) fail "private environment file has an invalid mode: $server_env." ;;
+  esac
+
+  if (( 8#$environment_mode & 8#077 )); then
+    fail "private environment file must not be readable by group or others: $server_env."
+  fi
+
+  if [ "$environment_owner" != "$(id -u)" ]; then
+    fail "private environment file must be owned by the current user: $server_env."
+  fi
+}
+
+read_private_environment() {
+  local line
+  local password=""
+  local username="opencode"
+  local has_password=false
+  local has_username=false
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      ''|'#'*) ;;
+      OPENCODE_SERVER_PASSWORD=*)
+        [ "$has_password" = false ] || fail "private environment file defines OPENCODE_SERVER_PASSWORD more than once."
+        password="${line#OPENCODE_SERVER_PASSWORD=}"
+        [ -n "$password" ] || fail "private environment file must define a non-empty OPENCODE_SERVER_PASSWORD."
+        has_password=true
+        ;;
+      OPENCODE_SERVER_USERNAME=*)
+        [ "$has_username" = false ] || fail "private environment file defines OPENCODE_SERVER_USERNAME more than once."
+        username="${line#OPENCODE_SERVER_USERNAME=}"
+        [ -n "$username" ] || fail "OPENCODE_SERVER_USERNAME must not be empty when set."
+        has_username=true
+        ;;
+      *) fail "private environment file contains an unsupported assignment; use only OPENCODE_SERVER_PASSWORD and optional OPENCODE_SERVER_USERNAME." ;;
+    esac
+  done < "$server_env"
+
+  [ "$has_password" = true ] || fail "private environment file must define OPENCODE_SERVER_PASSWORD."
+
+  case "$password$username" in
+    *$'\r'*|*$'\n'*) fail "private environment values must not contain carriage returns or newlines." ;;
+  esac
+
+  case "$username" in
+    *:*) fail "OPENCODE_SERVER_USERNAME must not contain a colon." ;;
+  esac
+
+  OPENCODE_SERVER_PASSWORD="$password"
+  OPENCODE_SERVER_USERNAME="$username"
+  export OPENCODE_SERVER_PASSWORD OPENCODE_SERVER_USERNAME
+}
+
+escape_curl_config_value() {
+  local value="$1"
+
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  printf '%s' "$value"
+}
+
+create_health_config() {
+  if ! curl_config="$(mktemp "${TMPDIR:-/tmp}/oc-curl.XXXXXX")"; then
+    fail "could not create a private curl configuration file."
+  fi
+
+  if ! chmod 600 "$curl_config"; then
+    cleanup
+    fail "could not protect temporary curl configuration file."
+  fi
+
+  if ! printf 'user = "%s:%s"\n' "$(escape_curl_config_value "$OPENCODE_SERVER_USERNAME")" "$(escape_curl_config_value "$OPENCODE_SERVER_PASSWORD")" > "$curl_config"; then
+    cleanup
+    fail "could not write temporary curl configuration file."
+  fi
+}
+
+wait_for_authenticated_health() {
+  local attempt=1
+
+  while [ "$attempt" -le "$health_attempts" ]; do
+    if ! systemctl --user is-active --quiet opencode-web.service; then
+      fail "opencode-web.service is not active; inspect 'systemctl --user status opencode-web.service'."
+    fi
+
+    if curl --noproxy '*' --config "$curl_config" --silent --show-error --fail --max-time 2 --output /dev/null "$health_url" 2>/dev/null; then
+      return
+    fi
+
+    sleep 1
+    attempt=$((attempt + 1))
+  done
+
+  fail "OpenCode did not become healthy after $health_attempts seconds; inspect 'systemctl --user status opencode-web.service'."
+}
+
+cleanup() {
+  local config_to_remove="$curl_config"
+
+  curl_config=""
+  [ -z "$config_to_remove" ] || rm -f "$config_to_remove"
+}
+
+main() {
+  [ -n "${HOME:-}" ] || fail "HOME is required."
+  [ -d "$PWD" ] || fail "current working directory is unavailable."
+
+  verify_opencode
+  require_command curl
+  require_command tailscale
+  verify_tailscale
+  verify_private_environment
+  read_private_environment
+
+  require_command systemctl
+  if ! systemctl --user show-environment >/dev/null 2>&1; then
+    fail "cannot access the user systemd manager; start a user session with a working systemd user bus."
+  fi
+
+  if ! systemctl --user start opencode-web.service; then
+    fail "could not start opencode-web.service; inspect 'systemctl --user status opencode-web.service'."
+  fi
+
+  create_health_config
+  trap cleanup EXIT
+  trap 'cleanup; exit 1' HUP INT TERM
+  wait_for_authenticated_health
+  cleanup || fail "could not remove temporary curl configuration file."
+  trap - EXIT HUP INT TERM
+  unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+  exec "$opencode_bin" attach "$health_url" --dir "$PWD"
+}
+
+main "$@"
