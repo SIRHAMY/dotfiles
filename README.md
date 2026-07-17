@@ -587,3 +587,117 @@ just setup profile=linux-remote
 ```
 
 `check-conflicts` walks only the resolved profile's package list, so it won't false-fail on workstation-only paths under a remote install — but stale symlinks left over from the prior profile stay on disk until you unstow them. The migration above is the clean path.
+
+## 16. OpenCode Web service (Linux)
+
+Both Linux profiles stow one `systemd --user` service that runs `opencode serve` on `127.0.0.1:4096`. The `oc` command starts or reuses that service, waits for its authenticated health endpoint, and attaches a TUI to the current working directory. OpenCode Web and `oc` therefore use the same backend and can see the same sessions.
+
+### Prerequisites and security
+
+Install these before using `oc`:
+
+- OpenCode must be executable at `~/.opencode/bin/opencode`; setup deliberately does not install it.
+- `curl`, `tailscale`, and a running, connected Tailscale client are required by `oc`.
+- `jq` is required only when setup must migrate an existing `~/.config/opencode/config.json`.
+- A working `systemd --user` manager is required; this integration is not supported on hosts without one.
+
+The service reads its Basic-auth password from the local-only `~/.config/opencode/server.env`. Setup creates it if absent, requires a regular user-owned file, and sets mode `0600`; it never prints the password. Do not add it to Git, shell history, terminal output, or a shared filesystem.
+
+The public lower-precedence config disables OpenCode sharing and accepts all OpenCode permissions with `{"*": "allow"}`. Loopback binding, Basic auth, Tailscale Serve, and a restricted tailnet policy limit network reachability, but they do not make untrusted agents safe: an automatically permitted agent can run shell commands as this Unix user and can access inherited credentials. Use only trusted agents and providers.
+
+### Install and make persistent
+
+Run setup for the intended Linux profile, then load and enable the newly stowed unit:
+
+```sh
+just setup profile=linux-workstation
+# or: just setup profile=linux-remote
+
+loginctl enable-linger "$USER"
+systemctl --user daemon-reload
+systemctl --user enable --now opencode-web.service
+```
+
+Lingering keeps the user manager and enabled service alive after logout. Re-run `just setup profile=linux-workstation` or `linux-remote` to reconcile the package on later updates, then run `systemctl --user daemon-reload` and restart the service if its unit changed.
+
+If `~/.config/opencode/config.json` already exists as a regular file, setup validates it as JSON and creates a timestamped `.pre-opencode-web.<timestamp>.bak` backup. It moves that config to the higher-precedence `opencode.json` when no such file exists; otherwise it deep-merges the old `config.json` below the existing `opencode.json`, backing up both inputs. It never changes `opencode.jsonc`. Setup warns, without printing values, when either higher-precedence file defines `permission` or `share`, because that policy overrides the stowed defaults. Fix an invalid config or an unexpected higher-precedence policy before continuing.
+
+### Private tailnet access
+
+Create a persistent Tailscale Serve proxy once on the Linux host. It terminates tailnet HTTPS and forwards only to the loopback OpenCode server; do not use Tailscale Funnel.
+
+```sh
+tailscale serve --bg http://127.0.0.1:4096
+tailscale serve status
+```
+
+The first command may prompt to enable HTTPS for the tailnet. The `--bg` configuration persists in Tailscale; `tailscale serve status` prints the private `https://<device>.<tailnet>.ts.net` URL. See [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve) for configuration and reset behavior.
+
+Restrict that HTTPS listener to the intended phone or other device in the tailnet policy. Tailscale policies are allow-only: remove or narrow any broader rule that already grants the host access. The following is an illustrative [policy fragment](https://tailscale.com/docs/reference/syntax/policy-file), not a copy-paste policy: replace both addresses with the server and intended-client Tailscale IPs, merge it with the existing HuJSON policy, and keep only the access the device needs.
+
+```jsonc
+"hosts": {
+  "opencode-server": "100.x.y.z",
+},
+"acls": [
+  {
+    "action": "accept",
+    "src": ["100.a.b.c"],
+    "proto": "tcp",
+    "dst": ["opencode-server:443"],
+  },
+],
+```
+
+The ACL controls tailnet reachability to Serve's HTTPS listener, normally port `443`, rather than the loopback-only backend port `4096`. Verify the intended device can load the Serve URL and that no unwanted device is permitted by another policy rule.
+
+### Normal worktree use
+
+From the worktree where the agent should operate, run:
+
+```sh
+cd ~/Code/project
+oc
+```
+
+`oc` validates the prerequisites and private environment, starts `opencode-web.service` idempotently, then attaches OpenCode with that worktree as its directory. Leaving the TUI detaches the client; it does not stop the shared server. Open the private Serve URL on an allowed tailnet device to monitor or continue the same server sessions in Web. Authenticate locally with the private server credential without displaying or copying it into notes.
+
+### Recovery, archives, and logs
+
+Use these commands before changing configuration:
+
+```sh
+systemctl --user status opencode-web.service
+journalctl --user -u opencode-web.service -e
+journalctl --user -u opencode-web.service -f
+systemctl --user restart opencode-web.service
+tailscale serve status
+```
+
+A service restart does not intentionally discard OpenCode history. Run `oc` from the worktree and select the existing session in the TUI or Web UI. For a portable archive, use OpenCode's session export/import commands outside the public dotfiles checkout; `--sanitize` redacts sensitive transcript and file data, but review the archive before sharing it.
+
+```sh
+mkdir -p ~/Documents/opencode-archives
+~/.opencode/bin/opencode session list
+~/.opencode/bin/opencode export <session-id> --sanitize > ~/Documents/opencode-archives/<session-id>.json
+~/.opencode/bin/opencode import ~/Documents/opencode-archives/<session-id>.json
+```
+
+### Manual smoke procedure (not yet run)
+
+Run this on a Linux host after completing the setup above. It is the acceptance procedure for the remaining WRK-004 e2e checklist; documenting it is not evidence that the real-host smoke has passed.
+
+1. **Prerequisites:** Confirm `oc` fails before starting a service when OpenCode, `curl`, Tailscale, the private environment file, or the user manager is unavailable. For example, capture the installed helper path, then run it with an empty temporary home to exercise the missing-OpenCode failure and with an empty `PATH` to exercise the missing-`curl` failure:
+
+   ```sh
+   oc_path="$HOME/.local/bin/oc"
+   temporary_home="$(mktemp -d)"
+   HOME="$temporary_home" /bin/bash "$oc_path"
+   PATH=/nonexistent /bin/bash "$oc_path"
+   ```
+
+   Each invocation must exit nonzero with the named prerequisite error. Exercise unavailable or disconnected Tailscale, an insecure or missing `server.env`, and an inaccessible user manager in an isolated test account rather than weakening the working host.
+2. **Migration:** On a test account with a valid pre-existing `~/.config/opencode/config.json`, run `just setup profile=linux-remote`. Confirm a timestamped backup exists, the original settings are in `opencode.json` or preserved by the merge, `config.json` is stowed, and any higher-precedence `permission` or `share` warning is reviewed. Repeat with an existing `opencode.json` and verify its values win; verify `opencode.jsonc` remains unchanged.
+3. **Attach and shared visibility:** In a worktree, run `oc`, create or resume a recognizable session, exit, and run `oc` again. Confirm the unit remains active and both attachments authenticate to the same server. Load the private Serve URL on the allowed phone or tailnet device and confirm the same session is visible in Web.
+4. **Persistence:** Run `systemctl --user restart opencode-web.service`, then reconnect with `oc` and Web. Confirm the prior session history remains. Log out of the Linux host; from the allowed phone, confirm the Serve URL remains available, then log back in and inspect the status and journal commands above.
+5. **Access boundary:** Confirm the intended device reaches the HTTPS URL and an excluded tailnet device cannot. Record the result only after the real-host run; do not mark the e2e checklist complete from this document alone.
