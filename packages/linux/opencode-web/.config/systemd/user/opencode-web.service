@@ -1,0 +1,15 @@
+[Unit]
+Description=OpenCode web server
+StartLimitIntervalSec=1min
+StartLimitBurst=5
+
+[Service]
+Type=exec
+EnvironmentFile=%h/.config/opencode/server.env
+ExecStart=%h/.opencode/bin/opencode serve --hostname 127.0.0.1 --port 4096
+Restart=on-failure
+RestartSec=5s
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

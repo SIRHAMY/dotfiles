@@ -31,7 +31,7 @@ Add a Linux-only stow package installed by both workstation and remote profiles.
 ## Checklist
 
 - [x] Define the secret boundary and OpenCode defaults: private password environment file used by both service and helper, sharing disabled, and the explicit global `permission: {"*": "allow"}` policy; detect, back up, and merge any existing global OpenCode config before stowing it.
-- [ ] Add a Linux-only `opencode-web` stow package with a loopback-bound, restart-supervised `systemd --user` OpenCode server unit that terminates its process group on stop and resolves the documented OpenCode executable without an interactive-shell PATH.
+- [x] Add a Linux-only `opencode-web` stow package with a loopback-bound, restart-supervised `systemd --user` OpenCode server unit that terminates its process group on stop and resolves the documented OpenCode executable without an interactive-shell PATH.
 - [ ] Add the interactive `oc` helper that verifies prerequisites, starts the service, reads the private environment file without logging it, waits for authenticated health, and attaches to the current working directory.
 - [x] Verify `opencode-web` participates in both Linux profiles' existing Stow conflict checks.
 - [ ] Document prerequisites, user-service lingering, one-time persistent Tailscale Serve setup targeting `127.0.0.1:4096`, intended-device ACL restriction, install/enable commands, normal worktree/session use, recovery, archival, and log inspection.
