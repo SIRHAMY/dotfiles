@@ -5,8 +5,8 @@ os := `uname -s`
 # resolve a profile via `_profile-context` and pick from these vars.
 packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin ssh"
 packages_common_workstation := "ghostty"
-packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d"
-packages_linux_remote       := "zsh-linux bash-remote"
+packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d opencode-web"
+packages_linux_remote       := "zsh-linux bash-remote opencode-web"
 packages_macos_workstation  := "zsh-macos aerospace sketchybar"
 
 # Link everything for the resolved profile. Pre-flights conflicts (fails loud
@@ -124,6 +124,9 @@ setup profile="":
     echo "Setup: profile=$profile (resolved from $source)"
     echo "Setting up for $(uname -s)..."
     just "$deps_recipe"
+    case "$profile" in
+        linux-workstation|linux-remote) just setup-opencode-web ;;
+    esac
     just all profile="$profile"
     case "$profile" in
         linux-workstation) just setup-sway-session ;;
@@ -141,6 +144,9 @@ setup-ai-dotfiles:
 # Link selected mutable runtime state into Ona EFS when EFS_MOUNT_POINT is set.
 setup-efs-state:
     ./scripts/setup-efs-state.sh
+
+setup-opencode-web:
+    bash ./scripts/setup-opencode-web.sh
 
 # Best-effort login shell update for containers that allow passwordless sudo.
 setup-login-shell:
@@ -284,7 +290,7 @@ install-deps-linux-workstation:
           grim slurp wl-clipboard wtype brightnessctl playerctl gtk-layer-shell \
           zsh-autosuggestions zsh-syntax-highlighting \
           ibm-plex-sans-fonts ibm-plex-mono-fonts \
-          NetworkManager-tui gnome-keyring flatpak)
+           NetworkManager-tui gnome-keyring flatpak jq)
     echo "Installing with dnf: ${deps[*]}"
     sudo dnf install -y "${deps[@]}"
     just install-zellij
