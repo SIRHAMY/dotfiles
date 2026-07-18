@@ -301,6 +301,7 @@ install-deps-linux-workstation:
     just install-yazi
     just install-resvg
     just install-codex
+    just install-opencode
     just install-flatpaks
     just install-handy
     just install-cliphist
@@ -332,6 +333,7 @@ install-deps-linux-remote:
     just install-lazygit
     just install-gh
     just install-codex
+    just install-opencode
 
 # Install dependencies for the mac-workstation profile (Homebrew). Profile-blind:
 # assumes it is being invoked on a Darwin host. Body lifted from the Darwin
@@ -355,6 +357,7 @@ install-deps-mac-workstation:
     # short name still works for the `brew list` idempotency probe.
     brew list --cask ghostty &>/dev/null || brew install --cask ghostty
     brew list --cask aerospace &>/dev/null || brew install --cask nikitabobko/tap/aerospace
+    just install-opencode
     # Autostart sketchybar at login. Idempotent — `brew services start` is a
     # no-op if it's already running.
     brew services start sketchybar
@@ -577,6 +580,52 @@ install-codex:
     install -m 755 "$binary" "$local_bin/codex"
     echo "codex installed to $local_bin/codex"
     "$local_bin/codex" --version
+
+# Install OpenCode from its pinned official installer. The service contract
+# requires this installer-owned path instead of Homebrew's executable path.
+[private]
+install-opencode:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    opencode_version="1.18.3"
+    opencode_bin="$HOME/.opencode/bin/opencode"
+    opencode_installer_url="https://raw.githubusercontent.com/anomalyco/opencode/v1.18.3/install"
+    opencode_installer_sha256="fc3c1b2123f49b6df545a7622e5127d21cd794b15134fc3b66e1ca49f7fb297e"
+    system_path="/usr/bin:/bin:/usr/sbin:/sbin"
+    installed_version=""
+    if [ -x "$opencode_bin" ]; then
+        installed_version="$("$opencode_bin" --version 2>/dev/null || true)"
+    fi
+    if [ "$installed_version" = "$opencode_version" ]; then
+        echo "OpenCode $opencode_version already installed at $opencode_bin, skipping."
+        exit 0
+    fi
+
+    installer_file="$(mktemp "${TMPDIR:-/tmp}/opencode-installer.XXXXXX")"
+    trap 'rm -f "$installer_file"' EXIT
+    chmod 600 "$installer_file"
+    PATH="$system_path" /usr/bin/curl -fsSL "$opencode_installer_url" -o "$installer_file"
+    if [ -x /usr/bin/sha256sum ]; then
+        installer_digest="$(/usr/bin/sha256sum "$installer_file")"
+    elif [ -x /usr/bin/shasum ]; then
+        installer_digest="$(/usr/bin/shasum -a 256 "$installer_file")"
+    else
+        echo "OpenCode installation requires sha256sum or shasum." >&2
+        exit 1
+    fi
+    installer_digest="${installer_digest%% *}"
+    if [ "$installer_digest" != "$opencode_installer_sha256" ]; then
+        echo "OpenCode installer SHA-256 did not match the pinned v$opencode_version source." >&2
+        exit 1
+    fi
+
+    PATH="$system_path" /bin/bash "$installer_file" --version "$opencode_version" --no-modify-path
+
+    if [ ! -x "$opencode_bin" ] || [ "$("$opencode_bin" --version 2>/dev/null)" != "$opencode_version" ]; then
+        echo "Expected executable OpenCode $opencode_version at $opencode_bin after installation." >&2
+        exit 1
+    fi
+    echo "OpenCode $opencode_version installed at $opencode_bin."
 
 # Install Handy speech-to-text from GitHub release. Handy ships signed .rpm
 # packages; install via dnf so the desktop entry and /usr/bin/handy land in the

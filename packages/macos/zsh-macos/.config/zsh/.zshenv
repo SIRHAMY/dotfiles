@@ -9,3 +9,5 @@ if [ -z "${HOMEBREW_PREFIX-}" ]; then
   elif [ -x /usr/local/bin/brew ];    then eval "$(/usr/local/bin/brew shellenv)"
   fi
 fi
+
+export PATH="$HOME/.opencode/bin:$PATH"
