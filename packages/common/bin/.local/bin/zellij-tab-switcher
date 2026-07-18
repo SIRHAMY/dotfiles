@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ -z "${ZELLIJ:-}" ]; then
+    printf 'zellij-tab-switcher must run inside Zellij.\n' >&2
+    exit 1
+fi
+
+selected_tab="$(
+    zellij action list-tabs --json \
+        | jq -r '
+            .[]
+            | [
+                .tab_id,
+                (if .active then "*" else " " end),
+                ((.position + 1) | tostring),
+                .name
+              ]
+            | @tsv
+          ' \
+        | fzf \
+            --delimiter=$'\t' \
+            --with-nth=2.. \
+            --prompt='tabs> ' \
+            --header='Enter switch  Esc cancel'
+)" || exit 0
+
+tab_id="${selected_tab%%$'\t'*}"
+[ -n "$tab_id" ] && zellij action go-to-tab-by-id "$tab_id"
