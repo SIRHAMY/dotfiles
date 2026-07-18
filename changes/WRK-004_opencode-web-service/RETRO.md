@@ -20,7 +20,9 @@
 - [S-2] `just --fmt --check` reports existing whole-file formatting changes, so this unit used shell syntax, JSON assertions, and `just --show` parsing checks instead.
 - [S-3] A pre-existing lower-precedence `config.json` also blocks Stow, so setup must migrate it locally without touching `opencode.jsonc`.
 - [S-4] An `EXIT` trap alone does not remove the temporary curl config when `exec` starts the interactive client; remove it explicitly first so the password file cannot linger.
+- [S-5] Real-host provisioning found a pre-existing manual OpenCode Web process already bound to `127.0.0.1:4096`; do not replace or proxy it until its active work and authentication are understood.
 
 ## Notes
 
 - [M-1] Stack grounding: PROCEED after verifying OpenCode v1.18.3 layering, authentication, health, and attach contracts; all six units have an in-bounds plan.
+- [M-2] After the user removed the manual server, the managed service survived restart and its authenticated local health endpoint passed; Tailscale Serve then published the private phone route.

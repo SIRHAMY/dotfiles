@@ -113,7 +113,7 @@ just setup profile=linux-workstation   # Fedora desktop
 just setup profile=mac-workstation     # Mac
 ```
 
-`just setup profile=<name>` runs the matching `install-deps-<profile>` recipe (dnf on Fedora workstation; brew + casks on Mac), then `check-conflicts`, then `all` (per-bucket stow). On `linux-workstation` it also runs `setup-sway-session`.
+`just setup profile=<name>` runs the matching `install-deps-<profile>` recipe (dnf on Fedora workstation; brew + casks on Mac), including the pinned official OpenCode v1.18.3 installer for every profile, then `check-conflicts`, then `all` (per-bucket stow). On `linux-workstation` it also runs `setup-sway-session`.
 
 **Profile is required** — `just setup` with no profile and no `$DOTFILES_PROFILE` exits with a list of valid profiles for the current OS. For ergonomic muscle memory, export the profile once in your shell rc (e.g. `~/.zprofile`):
 
@@ -130,7 +130,7 @@ After `just setup` finishes, three manual one-time steps:
 1. **Caps Lock → Escape.** System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys → set Caps Lock to Escape. Mac handles this natively; no Karabiner needed.
 2. **AeroSpace Accessibility permission.** Launch AeroSpace (`open -a AeroSpace`). When prompted, grant Accessibility permission in System Settings → Privacy & Security → Accessibility. Then `aerospace reload-config`.
 3. **Hide the macOS menu bar (so SketchyBar can own the top strip).** System Settings → Control Center → "Automatically hide and show the menu bar" → set to **Always**. Otherwise SketchyBar's bar and the macOS menu bar stack on top of each other. Hiding the menu bar also hides the AeroSpace menu-extra workspace indicator, which is the intended outcome — SketchyBar replaces it.
-4. **brew shellenv handled automatically.** `packages/macos/zsh-macos/.config/zsh/.zshenv` evals `brew shellenv` on every zsh invocation (login or not), so new tmux/zellij panes get `$HOMEBREW_PREFIX` and brew binaries on `PATH` without `.zprofile`-only weirdness.
+4. **Shell PATH handled automatically.** `packages/macos/zsh-macos/.config/zsh/.zshenv` evals `brew shellenv` and adds `~/.opencode/bin` on every zsh invocation (login or not), so new tmux/zellij panes get Homebrew and official OpenCode binaries on `PATH` without `.zprofile`-only weirdness.
 
 **MDM fallback (managed work Mac).** If brew or cask installs are blocked by MDM, you can still stow the common configs by hand, skipping `install-deps`:
 
@@ -590,16 +590,16 @@ just setup profile=linux-remote
 
 ## 16. OpenCode Web service (Linux)
 
-Both Linux profiles stow one `systemd --user` service that runs `opencode serve` on `127.0.0.1:4096`. The `oc` command starts or reuses that service, waits for its authenticated health endpoint, and attaches a TUI to the current working directory. OpenCode Web and `oc` therefore use the same backend and can see the same sessions.
+Both Linux profiles stow and provision one `systemd --user` service that runs `opencode serve` on `127.0.0.1:4096`. The `oc` command starts or reuses that service, waits for its authenticated health endpoint, and attaches a TUI to the current working directory. OpenCode Web and `oc` therefore use the same backend and can see the same sessions. `linux-workstation` also publishes that loopback service privately through Tailscale Serve; `linux-remote` stays local-only and neither requires nor invokes Tailscale.
 
 ### Prerequisites and security
 
 Install these before using `oc`:
 
-- OpenCode must be executable at `~/.opencode/bin/opencode`; setup deliberately does not install it.
-- `curl`, `tailscale`, and a running, connected Tailscale client are required by `oc`.
+- `just setup` installs and verifies OpenCode v1.18.3 at `~/.opencode/bin/opencode` with its pinned official installer. It does not use Homebrew because that executable path conflicts with the service contract.
+- `curl` and a working `systemd --user` manager are required by `oc` and setup on both Linux profiles.
+- `linux-workstation` additionally requires a running, connected Tailscale client. `linux-remote` does not require Tailscale or a tailnet.
 - `jq` is required only when setup must migrate an existing `~/.config/opencode/config.json`.
-- A working `systemd --user` manager is required; this integration is not supported on hosts without one.
 
 The service reads its Basic-auth password from the local-only `~/.config/opencode/server.env`. Setup creates it if absent, requires a regular user-owned file, and sets mode `0600`; it never prints the password. Do not add it to Git, shell history, terminal output, or a shared filesystem.
 
@@ -607,27 +607,25 @@ The public lower-precedence config disables OpenCode sharing and accepts all Ope
 
 ### Install and make persistent
 
-Run setup for the intended Linux profile, then load and enable the newly stowed unit:
+Run setup for the intended Linux profile. It stows the package, reloads the user manager, enables lingering, and enables and starts the newly stowed unit:
 
 ```sh
 just setup profile=linux-workstation
 # or: just setup profile=linux-remote
 
-loginctl enable-linger "$USER"
-systemctl --user daemon-reload
-systemctl --user enable --now opencode-web.service
 ```
 
-Lingering keeps the user manager and enabled service alive after logout. Re-run `just setup profile=linux-workstation` or `linux-remote` to reconcile the package on later updates, then run `systemctl --user daemon-reload` and restart the service if its unit changed.
+Lingering keeps the user manager and enabled service alive after logout. Re-run `just setup profile=linux-workstation` or `linux-remote` to reconcile the package, reload the user manager, and restart the service on later updates.
 
 If `~/.config/opencode/config.json` already exists as a regular file, setup validates it as JSON and creates a timestamped `.pre-opencode-web.<timestamp>.bak` backup. It moves that config to the higher-precedence `opencode.json` when no such file exists; otherwise it deep-merges the old `config.json` below the existing `opencode.json`, backing up both inputs. It never changes `opencode.jsonc`. Setup warns, without printing values, when either higher-precedence file defines `permission` or `share`, because that policy overrides the stowed defaults. Fix an invalid config or an unexpected higher-precedence policy before continuing.
 
 ### Private tailnet access
 
-Create a persistent Tailscale Serve proxy once on the Linux host. It terminates tailnet HTTPS and forwards only to the loopback OpenCode server; do not use Tailscale Funnel.
+`just setup profile=linux-workstation` validates Tailscale and creates the persistent Tailscale Serve proxy. It terminates tailnet HTTPS and forwards only to the loopback OpenCode server; do not use Tailscale Funnel. `linux-remote` never creates this route.
+
+Inspect the workstation route with:
 
 ```sh
-tailscale serve --bg http://127.0.0.1:4096
 tailscale serve status
 ```
 
@@ -683,11 +681,13 @@ mkdir -p ~/Documents/opencode-archives
 ~/.opencode/bin/opencode import ~/Documents/opencode-archives/<session-id>.json
 ```
 
-### Manual smoke procedure (not yet run)
+### Manual smoke procedure and result
 
 Run this on a Linux host after completing the setup above. It is the acceptance procedure for the remaining WRK-004 e2e checklist; documenting it is not evidence that the real-host smoke has passed.
 
-1. **Prerequisites:** Confirm `oc` fails before starting a service when OpenCode, `curl`, Tailscale, the private environment file, or the user manager is unavailable. For example, capture the installed helper path, then run it with an empty temporary home to exercise the missing-OpenCode failure and with an empty `PATH` to exercise the missing-`curl` failure:
+**2026-07-17 current-host result: partial.** Disposable-home checks verified the then-current `oc` failures for missing OpenCode, `curl`, Tailscale, and an insecure private environment file. They also verified config migration to `opencode.json`, deep-merge precedence, timestamped backups, and unchanged `opencode.jsonc`. Narrow provisioning created the private environment file, stowed the package, enabled linger, and enabled the unit. After removing an existing manual server that held port `4096`, the managed unit started successfully; it remained active after restart and authenticated `GET /global/health` passed. Tailscale Serve now publishes the private browser route, and the user confirmed it loads from a phone. Repeated interactive attach, shared Web/TUI session visibility, post-logout availability, and ACL exclusion remain unverified.
+
+1. **Prerequisites:** Confirm `oc` fails before starting a service when OpenCode, `curl`, the private environment file, or the user manager is unavailable. On `linux-workstation`, also confirm setup fails when Tailscale is unavailable or disconnected; `linux-remote` must not require it. For example, capture the installed helper path, then run it with an empty temporary home to exercise the missing-OpenCode failure and with an empty `PATH` to exercise the missing-`curl` failure:
 
    ```sh
    oc_path="$HOME/.local/bin/oc"
@@ -696,8 +696,8 @@ Run this on a Linux host after completing the setup above. It is the acceptance 
    PATH=/nonexistent /bin/bash "$oc_path"
    ```
 
-   Each invocation must exit nonzero with the named prerequisite error. Exercise unavailable or disconnected Tailscale, an insecure or missing `server.env`, and an inaccessible user manager in an isolated test account rather than weakening the working host.
+   Each invocation must exit nonzero with the named prerequisite error. Exercise workstation-only unavailable or disconnected Tailscale, an insecure or missing `server.env`, and an inaccessible user manager in an isolated test account rather than weakening the working host.
 2. **Migration:** On a test account with a valid pre-existing `~/.config/opencode/config.json`, run `just setup profile=linux-remote`. Confirm a timestamped backup exists, the original settings are in `opencode.json` or preserved by the merge, `config.json` is stowed, and any higher-precedence `permission` or `share` warning is reviewed. Repeat with an existing `opencode.json` and verify its values win; verify `opencode.jsonc` remains unchanged.
-3. **Attach and shared visibility:** In a worktree, run `oc`, create or resume a recognizable session, exit, and run `oc` again. Confirm the unit remains active and both attachments authenticate to the same server. Load the private Serve URL on the allowed phone or tailnet device and confirm the same session is visible in Web.
-4. **Persistence:** Run `systemctl --user restart opencode-web.service`, then reconnect with `oc` and Web. Confirm the prior session history remains. Log out of the Linux host; from the allowed phone, confirm the Serve URL remains available, then log back in and inspect the status and journal commands above.
+3. **Attach and shared visibility:** In a worktree, run `oc`, create or resume a recognizable session, exit, and run `oc` again. Confirm the unit remains active and both attachments authenticate to the same server. On `linux-workstation`, load the private Serve URL on the allowed phone or tailnet device and confirm the same session is visible in Web; `linux-remote` remains local-only.
+4. **Persistence:** Run `systemctl --user restart opencode-web.service`, then reconnect with `oc` and Web. Confirm the prior session history remains. On `linux-workstation`, log out of the Linux host and confirm the Serve URL remains available from the allowed phone; then log back in and inspect the status and journal commands above.
 5. **Access boundary:** Confirm the intended device reaches the HTTPS URL and an excluded tailnet device cannot. Record the result only after the real-host run; do not mark the e2e checklist complete from this document alone.
