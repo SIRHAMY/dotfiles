@@ -1,10 +1,63 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+profile="${1:-}"
+phase="${2:-}"
 config_dir="$HOME/.config/opencode"
 server_env="$config_dir/server.env"
 default_config="$config_dir/config.json"
 override_config="$config_dir/opencode.json"
+opencode_bin="$HOME/.opencode/bin/opencode"
+
+fail() {
+  echo "setup-opencode-web: $*" >&2
+  exit 1
+}
+
+require_command() {
+  local command_name="$1"
+
+  command -v "$command_name" >/dev/null 2>&1 || fail "missing required command '$command_name'."
+}
+
+verify_opencode() {
+  if [ ! -f "$opencode_bin" ] || [ ! -x "$opencode_bin" ]; then
+    fail "expected executable OpenCode binary at $opencode_bin."
+  fi
+}
+
+verify_user_systemd() {
+  require_command loginctl
+  require_command systemctl
+  systemctl --user show-environment >/dev/null 2>&1 || fail "cannot access the user systemd manager; start a user session with a working systemd user bus."
+}
+
+verify_tailscale() {
+  local tailscale_status
+
+  require_command tailscale
+  if ! tailscale_status="$(tailscale status --json 2>/dev/null)"; then
+    fail "Tailscale is unavailable; connect it and rerun."
+  fi
+
+  if [[ ! "$tailscale_status" =~ \"BackendState\"[[:space:]]*:[[:space:]]*\"Running\" ]]; then
+    fail "Tailscale is disconnected; connect it and rerun."
+  fi
+}
+
+verify_profile() {
+  case "$profile" in
+    linux-workstation|linux-remote) ;;
+    *) fail "expected Linux profile, got '${profile:-empty}'." ;;
+  esac
+}
+
+verify_phase() {
+  case "$phase" in
+    migrate|provision) ;;
+    *) fail "expected setup phase 'migrate' or 'provision', got '${phase:-empty}'." ;;
+  esac
+}
 
 require_jq() {
   if ! command -v jq >/dev/null 2>&1; then
@@ -126,6 +179,13 @@ validate_server_env() {
   fi
 }
 
+verify_profile
+verify_phase
+verify_opencode
+verify_user_systemd
+if [ "$profile" = "linux-workstation" ]; then
+  verify_tailscale
+fi
 mkdir -p "$config_dir"
 migrate_default_config
 report_higher_precedence_config
@@ -135,4 +195,16 @@ if [ -e "$server_env" ] || [ -L "$server_env" ]; then
   echo "setup-opencode-web: using private server environment file at $server_env."
 else
   create_server_env
+fi
+
+if [ "$phase" = "migrate" ]; then
+  exit 0
+fi
+
+systemctl --user daemon-reload
+loginctl enable-linger "$USER"
+systemctl --user enable --now opencode-web.service
+
+if [ "$profile" = "linux-workstation" ]; then
+  tailscale serve --bg http://127.0.0.1:4096
 fi

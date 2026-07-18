@@ -24,18 +24,6 @@ verify_opencode() {
   fi
 }
 
-verify_tailscale() {
-  local tailscale_status
-
-  if ! tailscale_status="$(tailscale status --json 2>/dev/null)"; then
-    fail "Tailscale is unavailable; connect it and rerun."
-  fi
-
-  if [[ ! "$tailscale_status" =~ \"BackendState\"[[:space:]]*:[[:space:]]*\"Running\" ]]; then
-    fail "Tailscale is disconnected; connect it and rerun."
-  fi
-}
-
 verify_private_environment() {
   local environment_mode
   local environment_owner
@@ -157,8 +145,6 @@ main() {
 
   verify_opencode
   require_command curl
-  require_command tailscale
-  verify_tailscale
   verify_private_environment
   read_private_environment
 

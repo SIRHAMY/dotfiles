@@ -125,12 +125,16 @@ setup profile="":
     echo "Setting up for $(uname -s)..."
     just "$deps_recipe"
     case "$profile" in
-        linux-workstation|linux-remote) just setup-opencode-web ;;
+        linux-workstation|linux-remote) just setup-opencode-web "$profile" migrate ;;
     esac
     just all profile="$profile"
     case "$profile" in
-        linux-workstation) just setup-sway-session ;;
+        linux-workstation)
+            just setup-opencode-web "$profile" provision
+            just setup-sway-session
+            ;;
         linux-remote)
+            just setup-opencode-web "$profile" provision
             just setup-login-shell
             just setup-ai-dotfiles
             just setup-efs-state
@@ -145,8 +149,8 @@ setup-ai-dotfiles:
 setup-efs-state:
     ./scripts/setup-efs-state.sh
 
-setup-opencode-web:
-    bash ./scripts/setup-opencode-web.sh
+setup-opencode-web profile phase:
+    bash ./scripts/setup-opencode-web.sh "{{profile}}" "{{phase}}"
 
 # Best-effort login shell update for containers that allow passwordless sudo.
 setup-login-shell:
