@@ -7,7 +7,7 @@ StartLimitBurst=5
 Type=exec
 EnvironmentFile=%h/.config/opencode/server.env
 ExecStart=%h/.opencode/bin/opencode serve --hostname 127.0.0.1 --port 4096
-Restart=on-failure
+Restart=always
 RestartSec=5s
 KillMode=control-group
 
