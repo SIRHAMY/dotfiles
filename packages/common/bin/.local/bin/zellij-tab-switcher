@@ -12,15 +12,13 @@ selected_tab="$(
             .[]
             | [
                 .tab_id,
-                (if .active then "*" else " " end),
-                ((.position + 1) | tostring),
-                .name
+                "\(if .active then "*" else " " end) \(.position + 1) \(.name)"
               ]
             | @tsv
           ' \
         | fzf \
             --delimiter=$'\t' \
-            --with-nth=2.. \
+            --with-nth=2 \
             --prompt='tabs> ' \
             --header='Enter switch  Esc cancel'
 )" || exit 0

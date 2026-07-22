@@ -90,6 +90,8 @@ keybinds clear-defaults=true {
         bind "Alt t" {
             Run "zellij-tab-switcher" {
                 floating true
+                x "15%"
+                width "70%"
                 close_on_exit true
             }
         }
