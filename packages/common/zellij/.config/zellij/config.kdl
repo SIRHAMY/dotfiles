@@ -95,6 +95,12 @@ keybinds clear-defaults=true {
                 close_on_exit true
             }
         }
+        bind "Alt r" {
+            Run "panename" {
+                floating true
+                close_on_exit true
+            }
+        }
     }
     pane {
         bind "left" { MoveFocus "left"; }
