@@ -12,7 +12,6 @@
 | `$mod+d` | App launcher (Wofi) |
 | `$mod+Shift+q` | Kill focused window |
 | `$mod+Shift+c` | Reload sway config |
-| `$mod+Shift+e` | Exit sway (with confirmation) |
 | `$mod+Escape` | Lock screen |
 
 ### Navigation
@@ -46,7 +45,7 @@
 | `$mod+f` | Fullscreen |
 | `$mod+Shift+space` | Toggle floating |
 | `$mod+space` | Toggle focus between floating/tiled |
-| `$mod+a` | Focus parent container |
+| `$mod+Shift+e` | Focus parent container |
 | `$mod+Shift+s` | Sticky toggle (window follows across workspaces) |
 
 ### Scratchpad
