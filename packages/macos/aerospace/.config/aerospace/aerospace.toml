@@ -42,6 +42,11 @@ cmd-alt-j = 'focus down'
 cmd-alt-k = 'focus up'
 cmd-alt-l = 'focus right'
 
+# Switch the current workspace between tab-like accordion and tiled layouts
+# (mirrors sway $mod+w/e).
+alt-w = 'layout --root h_accordion'
+alt-e = 'layout --root tiles horizontal vertical'
+
 # Move focused container directionally (mirrors sway $mod+Ctrl+h/j/k/l)
 alt-ctrl-h = 'move left'
 alt-ctrl-j = 'move down'
