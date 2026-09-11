@@ -598,7 +598,7 @@ Install these before using `oc`:
 
 - `just setup` installs and verifies OpenCode v1.18.3 at `~/.opencode/bin/opencode` with its pinned official installer. It does not use Homebrew because that executable path conflicts with the service contract.
 - `curl` and a working `systemd --user` manager are required by `oc` and setup on both Linux profiles.
-- `linux-workstation` additionally requires a running, connected Tailscale client. `linux-remote` does not require Tailscale or a tailnet.
+- `linux-workstation` additionally requires a running, connected Tailscale client and one-time operator authorization for the setup user: `sudo tailscale set --operator="$USER"`. `linux-remote` does not require Tailscale or a tailnet.
 - `jq` is required only when setup must migrate an existing `~/.config/opencode/config.json`.
 
 The service reads its Basic-auth password from the local-only `~/.config/opencode/server.env`. Setup generates a password if the file is absent and preserves an explicitly empty password. `oc` requires a regular user-owned file, and setup sets mode `0600`; neither prints the password. Do not add credentials to Git, shell history, terminal output, or a shared filesystem.
