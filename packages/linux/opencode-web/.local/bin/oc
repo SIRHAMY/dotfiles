@@ -61,7 +61,6 @@ read_private_environment() {
       OPENCODE_SERVER_PASSWORD=*)
         [ "$has_password" = false ] || fail "private environment file defines OPENCODE_SERVER_PASSWORD more than once."
         password="${line#OPENCODE_SERVER_PASSWORD=}"
-        [ -n "$password" ] || fail "private environment file must define a non-empty OPENCODE_SERVER_PASSWORD."
         has_password=true
         ;;
       OPENCODE_SERVER_USERNAME=*)
@@ -98,6 +97,8 @@ escape_curl_config_value() {
 }
 
 create_health_config() {
+  [ -n "$OPENCODE_SERVER_PASSWORD" ] || return 0
+
   if ! curl_config="$(mktemp "${TMPDIR:-/tmp}/oc-curl.XXXXXX")"; then
     fail "could not create a private curl configuration file."
   fi
@@ -113,15 +114,20 @@ create_health_config() {
   fi
 }
 
-wait_for_authenticated_health() {
+wait_for_health() {
   local attempt=1
+  local curl_options=()
+
+  if [ -n "$curl_config" ]; then
+    curl_options=(--config "$curl_config")
+  fi
 
   while [ "$attempt" -le "$health_attempts" ]; do
     if ! systemctl --user is-active --quiet opencode-web.service; then
       fail "opencode-web.service is not active; inspect 'systemctl --user status opencode-web.service'."
     fi
 
-    if curl --noproxy '*' --config "$curl_config" --silent --show-error --fail --max-time 2 --output /dev/null "$health_url" 2>/dev/null; then
+    if curl --noproxy '*' "${curl_options[@]}" --silent --show-error --fail --max-time 2 --output /dev/null "$health_url" 2>/dev/null; then
       return
     fi
 
@@ -160,7 +166,7 @@ main() {
   create_health_config
   trap cleanup EXIT
   trap 'cleanup; exit 1' HUP INT TERM
-  wait_for_authenticated_health
+  wait_for_health
   cleanup || fail "could not remove temporary curl configuration file."
   trap - EXIT HUP INT TERM
   unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY

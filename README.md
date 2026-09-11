@@ -590,7 +590,7 @@ just setup profile=linux-remote
 
 ## 16. OpenCode Web service (Linux)
 
-Both Linux profiles stow and provision one `systemd --user` service that runs `opencode serve` on `127.0.0.1:4096`. The `oc` command starts or reuses that service, waits for its authenticated health endpoint, and attaches a TUI to the current working directory. OpenCode Web and `oc` therefore use the same backend and can see the same sessions. `linux-workstation` also publishes that loopback service privately through Tailscale Serve; `linux-remote` stays local-only and neither requires nor invokes Tailscale.
+Both Linux profiles stow and provision one `systemd --user` service that runs `opencode serve` on `127.0.0.1:4096`. The `oc` command starts or reuses that service, waits for its health endpoint using the configured authentication mode, and attaches a TUI to the current working directory. OpenCode Web and `oc` therefore use the same backend and can see the same sessions. `linux-workstation` also publishes that loopback service privately through Tailscale Serve; `linux-remote` stays local-only and neither requires nor invokes Tailscale.
 
 ### Prerequisites and security
 
@@ -601,9 +601,9 @@ Install these before using `oc`:
 - `linux-workstation` additionally requires a running, connected Tailscale client. `linux-remote` does not require Tailscale or a tailnet.
 - `jq` is required only when setup must migrate an existing `~/.config/opencode/config.json`.
 
-The service reads its Basic-auth password from the local-only `~/.config/opencode/server.env`. Setup creates it if absent, requires a regular user-owned file, and sets mode `0600`; it never prints the password. Do not add it to Git, shell history, terminal output, or a shared filesystem.
+The service reads its Basic-auth password from the local-only `~/.config/opencode/server.env`. Setup generates a password if the file is absent and preserves an explicitly empty password. `oc` requires a regular user-owned file, and setup sets mode `0600`; neither prints the password. Do not add credentials to Git, shell history, terminal output, or a shared filesystem.
 
-The public lower-precedence config disables OpenCode sharing and accepts all OpenCode permissions with `{"*": "allow"}`. Loopback binding, Basic auth, Tailscale Serve, and a restricted tailnet policy limit network reachability, but they do not make untrusted agents safe: an automatically permitted agent can run shell commands as this Unix user and can access inherited credentials. Use only trusted agents and providers.
+The public lower-precedence config disables OpenCode sharing and accepts all OpenCode permissions with `{"*": "allow"}`. Loopback binding, Tailscale Serve, a restricted tailnet policy, and optional Basic auth limit network reachability, but they do not make untrusted agents safe: an automatically permitted agent can run shell commands as this Unix user and can access inherited credentials. Use only trusted agents and providers.
 
 ### Install and make persistent
 
@@ -622,6 +622,14 @@ If `~/.config/opencode/config.json` already exists as a regular file, setup vali
 ### Private tailnet access
 
 `just setup profile=linux-workstation` validates Tailscale and creates the persistent Tailscale Serve proxy. It terminates tailnet HTTPS and forwards only to the loopback OpenCode server; do not use Tailscale Funnel. `linux-remote` never creates this route.
+
+For Tailscale-only authentication with no browser password prompts, set this assignment in the local `~/.config/opencode/server.env`:
+
+```sh
+OPENCODE_SERVER_PASSWORD=
+```
+
+Keep the assignment present with an empty value, then run `systemctl --user restart opencode-web.service`. Setup preserves this choice, and `oc` supports both empty and non-empty passwords. Remote access then depends on the tailnet policy; local processes can also access the loopback server. To restore Basic auth, set a non-empty password in that file and restart the service. Basic auth has no configurable login lifetime; the browser controls how long it remembers credentials.
 
 Inspect the workstation route with:
 
@@ -658,7 +666,7 @@ cd ~/Code/project
 oc
 ```
 
-`oc` validates the prerequisites and private environment, starts `opencode-web.service` idempotently, then attaches OpenCode with that worktree as its directory. Leaving the TUI detaches the client; it does not stop the shared server. Open the private Serve URL on an allowed tailnet device to monitor or continue the same server sessions in Web. Authenticate locally with the private server credential without displaying or copying it into notes.
+`oc` validates the prerequisites and private environment, starts `opencode-web.service` idempotently, then attaches OpenCode with that worktree as its directory. Leaving the TUI detaches the client; it does not stop the shared server. Open the private Serve URL on an allowed tailnet device to monitor or continue the same server sessions in Web. Tailscale-only mode opens without a password prompt. When Basic auth is enabled, use the private server credential without displaying or copying it into notes.
 
 ### Recovery, archives, and logs
 

@@ -173,7 +173,7 @@ validate_server_env() {
   fi
 
   chmod 600 "$server_env"
-  if ! grep -Eq '^OPENCODE_SERVER_PASSWORD=.+$' "$server_env"; then
+  if ! grep -Eq '^OPENCODE_SERVER_PASSWORD=.*$' "$server_env"; then
     echo "setup-opencode-web: $server_env must define OPENCODE_SERVER_PASSWORD." >&2
     exit 1
   fi
