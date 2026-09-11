@@ -25,8 +25,8 @@ theme "terminal-garden"
 
 themes {
     terminal-garden {
-        fg "#bcc2cc"
-        bg "#161616"
+        fg "#dedede"
+        bg "#0d0d0d"
         black "#1e2127"
         red "#e06c75"
         green "#10b981"
@@ -34,7 +34,7 @@ themes {
         blue "#61afef"
         magenta "#c678dd"
         cyan "#56b6c2"
-        white "#bcc2cc"
+        white "#dedede"
         orange "#d19a66"
         text_selected {
             base 30 30 30
@@ -45,16 +45,16 @@ themes {
             emphasis_3 30 30 30
         }
         ribbon_selected {
-            base 22 22 22
+            base 13 13 13
             background 16 185 129
-            emphasis_0 22 22 22
-            emphasis_1 22 22 22
-            emphasis_2 22 22 22
-            emphasis_3 22 22 22
+            emphasis_0 13 13 13
+            emphasis_1 13 13 13
+            emphasis_2 13 13 13
+            emphasis_3 13 13 13
         }
         frame_selected {
             base 16 185 129
-            background 22 22 22
+            background 13 13 13
             emphasis_0 16 185 129
             emphasis_1 16 185 129
             emphasis_2 16 185 129
@@ -62,7 +62,7 @@ themes {
         }
         frame_highlight {
             base 16 185 129
-            background 22 22 22
+            background 13 13 13
             emphasis_0 16 185 129
             emphasis_1 16 185 129
             emphasis_2 16 185 129

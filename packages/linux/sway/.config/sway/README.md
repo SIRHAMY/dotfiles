@@ -123,7 +123,7 @@ Two options: resize mode for fine-tuning, or direct bindings for quick adjustmen
 ## Appearance
 
 - 1px pixel borders, 4px inner gaps, 2px outer gaps
-- Dark theme (#161616 background) with emerald green (#10b981) accents
+- Near-black background (#0d0d0d), neutral text (#dedede), bright white (#eeeeee), and emerald green (#10b981) accents across Sway, Waybar, Wofi, Mako, swaylock, Ghostty, Zellij, and Yazi
 - Caps Lock remapped to Escape (Shift+Caps Lock for actual Caps Lock)
 
 ## Waybar Modules

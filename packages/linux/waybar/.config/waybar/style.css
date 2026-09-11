@@ -5,8 +5,8 @@
 }
 
 window#waybar {
-    background-color: #161616;
-    color: #bcc2cc;
+    background-color: #0d0d0d;
+    color: #dedede;
     border-bottom: none;
 }
 
@@ -43,8 +43,8 @@ window#waybar {
 }
 
 #workspaces button.visible {
-    color: #bcc2cc;
-    background: rgba(188, 194, 204, 0.15);
+    color: #dedede;
+    background: rgba(222, 222, 222, 0.15);
 }
 
 #workspaces button.focused {
@@ -122,7 +122,7 @@ window#waybar {
 
 @keyframes blink {
     to {
-        color: #bcc2cc;
+        color: #dedede;
     }
 }
 
@@ -134,7 +134,7 @@ window#waybar {
 
 /* Clock */
 #clock {
-    color: #bcc2cc;
+    color: #eeeeee;
     font-weight: bold;
 }
 

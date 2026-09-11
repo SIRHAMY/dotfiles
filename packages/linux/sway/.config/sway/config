@@ -20,10 +20,10 @@ gaps inner 4
 gaps outer 2
 
 # Window colors          border  background text    indicator child_border
-client.focused           #bcc2cc #161616    #bcc2cc #bcc2cc   #bcc2cc
-client.focused_inactive  #1e2127 #161616    #5e6570 #1e2127   #1e2127
-client.unfocused         #161616 #161616    #5e6570 #161616   #161616
-client.urgent            #e06c75 #161616    #bcc2cc #e06c75   #e06c75
+client.focused           #dedede #0d0d0d    #dedede #dedede   #dedede
+client.focused_inactive  #1e2127 #0d0d0d    #5e6570 #1e2127   #1e2127
+client.unfocused         #0d0d0d #0d0d0d    #5e6570 #0d0d0d   #0d0d0d
+client.urgent            #e06c75 #0d0d0d    #dedede #e06c75   #e06c75
 
 ### Output configuration
 # HiDPI scaling for 2560x1600 laptop display

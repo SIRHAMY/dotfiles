@@ -1,6 +1,6 @@
 window {
-    background-color: #161616;
-    border: 2px solid #bcc2cc;
+    background-color: #0d0d0d;
+    border: 2px solid #dedede;
     border-radius: 8px;
     font-family: "IBM Plex Sans", "Sans", sans-serif;
     font-size: 13px;
@@ -8,8 +8,8 @@ window {
 
 #input {
     background-color: #1e1e1e;
-    color: #bcc2cc;
-    border: 2px solid #bcc2cc;
+    color: #dedede;
+    border: 2px solid #dedede;
     border-bottom: 1px solid #2a2a2a;
     border-radius: 8px 8px 0 0;
     padding: 10px 14px;
@@ -36,7 +36,7 @@ window {
 }
 
 #text {
-    color: #bcc2cc;
+    color: #dedede;
     margin: 0 8px;
 }
 
@@ -49,7 +49,7 @@ window {
 #entry:selected {
     background-color: transparent;
     border: 1px solid #10b981;
-    color: #bcc2cc;
+    color: #dedede;
 }
 
 #img {

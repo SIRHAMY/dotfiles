@@ -1,8 +1,8 @@
-background = #161616
-foreground = #bcc2cc
+background = #0d0d0d
+foreground = #dedede
 cursor-color = #10b981
 selection-background = #3e4451
-selection-foreground = #bcc2cc
+selection-foreground = #dedede
 
 # Black
 palette = 0=#1e2127
@@ -33,5 +33,5 @@ palette = 6=#56b6c2
 palette = 14=#73c9d3
 
 # White
-palette = 7=#bcc2cc
-palette = 15=#ccd1d9
+palette = 7=#dedede
+palette = 15=#eeeeee

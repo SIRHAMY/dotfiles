@@ -4,7 +4,7 @@ daemonize
 
 image=~/.config/sway/wallpaper.png
 scaling=fill
-color=161616
+color=0d0d0d
 
 # Indicator
 indicator-radius=80
@@ -14,8 +14,8 @@ line-uses-inside
 # Default state
 inside-color=1e2127
 ring-color=5e6570
-text-color=bcc2cc
-separator-color=161616
+text-color=dedede
+separator-color=0d0d0d
 
 # Typing
 key-hl-color=10b981
