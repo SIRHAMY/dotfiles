@@ -5,6 +5,9 @@ default_mode "locked"
 // Open new panes in zsh even when a remote host still reports SHELL=/bin/bash.
 default_shell "zsh"
 
+// Work around unwanted selection on mouse movement by disabling advanced mouse actions.
+advanced_mouse_actions false
+
 // Match tmux scrollback (default is 10000)
 scroll_buffer_size 50000
 
