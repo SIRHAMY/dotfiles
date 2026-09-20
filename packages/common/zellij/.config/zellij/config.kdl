@@ -8,6 +8,9 @@ default_shell "zsh"
 // Work around unwanted selection on mouse movement by disabling advanced mouse actions.
 advanced_mouse_actions false
 
+// Keep accidental selections from replacing the clipboard. Use Ctrl+Shift+c to copy.
+copy_on_select false
+
 // Match tmux scrollback (default is 10000)
 scroll_buffer_size 50000
 
@@ -69,6 +72,9 @@ themes {
 }
 
 keybinds clear-defaults=true {
+    shared {
+        bind "Ctrl Shift c" { Copy; }
+    }
     locked {
         bind "Ctrl g" { SwitchToMode "normal"; }
         bind "Alt h" { MoveFocusOrTab "left"; }

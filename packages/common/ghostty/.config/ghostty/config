@@ -51,6 +51,9 @@
 theme = terminal-garden
 window-theme = ghostty
 
+# Copy terminal selections; otherwise let Zellij handle Ctrl+Shift+C.
+keybind = performable:ctrl+shift+c=copy_to_clipboard:mixed
+
 # Shift+Enter sends a literal newline so it survives SSH + multiplexers
 # (zellij over Ona SSH) where kitty keyboard protocol negotiation breaks down.
 keybind = shift+enter=text:\n
