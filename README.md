@@ -4,6 +4,8 @@ Public configuration files for my development environment, managed with [GNU Sto
 
 **This repo is for public configs only.** No secrets, API keys, or private tooling.
 
+See [Architecture](ARCHITECTURE.md) for machine requirements, configuration ownership, integration decisions, and known gaps.
+
 ## 1. What this repo is
 
 A stow-managed dotfiles repo split into three buckets — `packages/common/`, `packages/linux/`, `packages/macos/`. `just setup` on either OS produces a working terminal (Ghostty), shell (zsh + plugins + zoxide + fzf), editor (nvim/LazyVim), multiplexers (zellij, tmux), file manager (yazi), and window manager config (sway on Linux, AeroSpace on Mac). Editing OS-specific config means editing a file whose path names the OS — no `case $OSTYPE` inside config bodies.
@@ -434,15 +436,15 @@ Revocable per-user auth tokens — avoids re-login on every new instance:
 
 Only enable the auth-token block when the EFS volume is dedicated to a single user. Long-lived static credentials (cloud access keys, service-account JSON, SSH private keys, kube configs that reach production) stay machine-local regardless.
 
-Agent config that belongs in Git stays managed by `ai-dotfiles` (`~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`, `~/.agents/skills`). EFS is only for runtime state such as `/vim` mode, old Claude sessions, todos, agent histories, and shell history.
+Git-managed agent defaults stay owned by `ai-dotfiles` (`~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`, `~/.agents/skills`). EFS intentionally shares mutable effective configuration and runtime state across machines; it is not limited to backups or history. See [configuration ownership and Codex constraints](ARCHITECTURE.md#codex-configuration).
 
-Codex follows the same rule: config, rules, memories, prompt history, and old sessions are shared; caches, logs, plugin caches, and SQLite runtime databases stay local to each machine. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
+Mode B selects Codex config, rules, memories, prompt history, and old sessions for sharing. Its config symlink currently conflicts with `ai-dotfiles` sync; see the architecture note above before relinking. Caches, logs, plugin caches, and SQLite runtime databases should stay local: Mode B does not select them, but Mode A needs explicit exclusions for agent paths not covered by its defaults. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
 
 #### EFS guardrails (both modes)
 
-- Do not put source-controlled config in EFS. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`. In Mode A, the dotfiles checkouts are auto-excluded for the same reason.
+- Keep source checkouts separate from shared mutable state. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`; the effective Codex config may live on EFS and receive Git-managed defaults. In Mode A, the dotfiles checkouts are auto-excluded.
 - Keep long-lived static credentials out of EFS — cloud access keys, service-account JSON, SSH private keys, and kube configs that reach production stay machine-local or in Ona secrets. Revocable per-user OAuth tokens for dev tooling may be linked, but only when the EFS volume is dedicated to a single user.
-- Do not share dependency caches or runtime databases unless there is a proven need. Keep package caches, plugin caches, logs, `node_modules`, virtualenvs, and SQLite/WAL files local. Mode A auto-excludes the common offenders.
+- Do not share dependency caches or runtime databases unless there is a proven need. Keep package caches, plugin caches, logs, `node_modules`, virtualenvs, and SQLite/WAL files local. Mode A excludes a fixed list of common paths, not every cache or database; extend it for each integration.
 - Add new agents conservatively: identify their config paths, runtime-state paths, auth paths, and cache paths first, then decide whether the state is worth preserving — and in Mode A, whether anything needs an exclude.
 
 #### Useful overrides
