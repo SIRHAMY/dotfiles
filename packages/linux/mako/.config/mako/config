@@ -17,3 +17,7 @@ border-color=#5e6570
 [urgency=critical]
 border-color=#e06c75
 default-timeout=0
+
+[desktop-entry=chatgpt]
+default-timeout=20000
+ignore-timeout=1
