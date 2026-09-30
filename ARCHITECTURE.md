@@ -32,15 +32,15 @@ Private `ai-dotfiles` owns portable agent instructions, skills, and preferences.
 
 EFS sharing is intentional, not merely a backup. It does not provide application-level conflict resolution for concurrent writers. Revocable login tokens may also be shared on a single-user EFS volume; never commit them.
 
-The [EFS setup](README.md#efs-runtime-state) supports two layouts: Mode A mounts EFS over home and excludes paths back to prebuilt storage; Mode B symlinks selected files/directories into EFS. Mode A shares anything not excluded. Its defaults do **not** exclude every agent cache/database, so the machine-local boundary above still needs explicit exclusions for those paths.
+The [EFS setup](README.md#efs-runtime-state) supports two layouts: Mode A mounts EFS over home and excludes paths back to prebuilt storage; Mode B (recommended) mounts EFS at `/efs-home` and symlinks selected files/directories into it, leaving Codex state local. Mode A shares anything not excluded. Its defaults do **not** exclude every agent cache/database, so the machine-local boundary above still needs explicit exclusions for those paths.
 
 ## Codex configuration
 
 `~/.codex/config.toml` mixes portable preferences with app-written settings and host-specific data. A direct symlink into Git lets app writes dirty the source checkout; replacing the whole file can erase useful settings.
 
-Instead, `ai-dotfiles` merges managed defaults into the effective config. Its current `scripts/sync_codex_config.py` manages top-level scalar preferences and preserves other root settings and all TOML tables. Portable desktop preferences and plugin selections should also be managed declaratively where appropriate; host-specific fields should remain local. **Gap:** table-level ownership is not implemented, and sharing the whole effective TOML through EFS also shares any host-specific fields inside it.
+Instead, `ai-dotfiles` merges managed defaults into the effective config. Its current `scripts/sync_codex_config.py` manages top-level scalar preferences and preserves other root settings and all TOML tables. Portable desktop preferences and plugin selections should also be managed declaratively where appropriate; host-specific fields should remain local. **Gap:** table-level ownership is not implemented.
 
-**EFS compatibility gap:** Mode B's config symlink is currently rejected by the sync unless forced; forcing replaces the symlink with a regular file. EFS setup also leaves pre-existing Git symlinks unchanged. The intended fix is to preserve the EFS link and merge into its target. Mode A's regular file on an EFS-mounted home does not have this per-file symlink problem.
+Codex configuration, authentication, sessions, and runtime state belong on local storage. Mode B creates no Codex EFS links. Existing links and storage overrides require separate migration; setup does not relocate existing Codex data. Mode A requires an explicit `.codex` exclusion to keep it local.
 
 ## Other integration choices
 

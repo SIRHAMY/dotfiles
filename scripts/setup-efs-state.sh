@@ -232,22 +232,15 @@ if [ "$mount_point" = "$HOME" ]; then
   exit 0
 fi
 
-mkdir -p "$state_root/claude" "$state_root/codex" "$state_root/shell" "$HOME/.claude"
+mkdir -p "$state_root/claude" "$state_root/shell" "$HOME/.claude"
 
 link_file_state "$HOME/.claude.json" "$state_root/claude/.claude.json" json
 link_dir_state "$HOME/.claude/projects" "$state_root/claude/projects"
 link_dir_state "$HOME/.claude/todos" "$state_root/claude/todos"
 
-link_file_state "$HOME/.codex/config.toml" "$state_root/codex/config.toml" empty
-link_file_state "$HOME/.codex/history.jsonl" "$state_root/codex/history.jsonl" empty
-link_dir_state "$HOME/.codex/memories" "$state_root/codex/memories"
-link_dir_state "$HOME/.codex/rules" "$state_root/codex/rules"
-link_dir_state "$HOME/.codex/sessions" "$state_root/codex/sessions"
-
 link_file_state "$HOME/.zsh_history" "$state_root/shell/zsh_history" empty
 
 # Revocable per-user OAuth tokens — avoid re-login churn. Long-lived static creds stay local; see README.
 link_file_state "$HOME/.claude/.credentials.json" "$state_root/claude/.credentials.json" empty
-link_file_state "$HOME/.codex/auth.json" "$state_root/codex/auth.json" empty
 link_dir_state "$HOME/.config/gh" "$state_root/gh"
 link_dir_state "$HOME/.config/acli" "$state_root/acli"

@@ -369,9 +369,9 @@ DOTFILES_SKIP_AI_DOTFILES=1    # skip AI dotfiles entirely
 
 `linux-remote` also runs `just setup-efs-state`. This is optional: if `EFS_MOUNT_POINT` is unset, missing, or not mounted, setup keeps using local runtime state and continues.
 
-There are two supported modes. Pick one via the `EFS_MOUNT_POINT` Ona secret.
+There are two supported modes. Set the `EFS_MOUNT_POINT` Ona secret to `/efs-home` for the recommended selective mode, which keeps home on local storage and shares only selected paths.
 
-#### Mode A — share-everything (recommended)
+#### Mode A — share-everything (legacy)
 
 ```sh
 EFS_MOUNT_POINT=/home/vscode
@@ -403,25 +403,20 @@ Override the list with `DOTFILES_EFS_EXCLUDES=path1,path2,...` (replaces default
 
 Mode A requires `/prebuilt-home` to exist (Ona provides this). On non-Ona hosts the script logs and exits.
 
-#### Mode B — selective (more conservative)
+#### Mode B — selective (recommended)
 
 ```sh
-EFS_MOUNT_POINT=/home/vscode/.efs
+EFS_MOUNT_POINT=/efs-home
 ```
 
-EFS is mounted at a subdirectory, not over `$HOME`. Only the paths listed below are symlinked into EFS; nothing else is shared.
+EFS is mounted at `/efs-home`, leaving `$HOME` on local storage. Setup creates EFS symlinks only for the paths listed below; manually configured links are left unchanged.
 
-Runtime state — sessions, history, agent memory:
+Runtime state — Claude projects, todos, and shell history:
 
 ```text
 ~/.claude.json       -> $EFS_MOUNT_POINT/state/claude/.claude.json
 ~/.claude/projects  -> $EFS_MOUNT_POINT/state/claude/projects
 ~/.claude/todos     -> $EFS_MOUNT_POINT/state/claude/todos
-~/.codex/config.toml -> $EFS_MOUNT_POINT/state/codex/config.toml
-~/.codex/history.jsonl -> $EFS_MOUNT_POINT/state/codex/history.jsonl
-~/.codex/memories   -> $EFS_MOUNT_POINT/state/codex/memories
-~/.codex/rules      -> $EFS_MOUNT_POINT/state/codex/rules
-~/.codex/sessions   -> $EFS_MOUNT_POINT/state/codex/sessions
 ~/.zsh_history      -> $EFS_MOUNT_POINT/state/shell/zsh_history
 ```
 
@@ -429,20 +424,19 @@ Revocable per-user auth tokens — avoids re-login on every new instance:
 
 ```text
 ~/.claude/.credentials.json -> $EFS_MOUNT_POINT/state/claude/.credentials.json
-~/.codex/auth.json          -> $EFS_MOUNT_POINT/state/codex/auth.json
 ~/.config/gh                -> $EFS_MOUNT_POINT/state/gh
 ~/.config/acli              -> $EFS_MOUNT_POINT/state/acli
 ```
 
 Only enable the auth-token block when the EFS volume is dedicated to a single user. Long-lived static credentials (cloud access keys, service-account JSON, SSH private keys, kube configs that reach production) stay machine-local regardless.
 
-Git-managed agent defaults stay owned by `ai-dotfiles` (`~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`, `~/.agents/skills`). EFS intentionally shares mutable effective configuration and runtime state across machines; it is not limited to backups or history. See [configuration ownership and Codex constraints](ARCHITECTURE.md#codex-configuration).
+Git-managed agent defaults stay owned by `ai-dotfiles` (`~/.claude/commands`, `~/.claude/skills`, `~/.claude/settings.json`, `~/.claude/statusline.sh`, `~/.agents/skills`). Codex configuration stays local and receives portable defaults from `ai-dotfiles`. See [configuration ownership](ARCHITECTURE.md#codex-configuration).
 
-Mode B selects Codex config, rules, memories, prompt history, and old sessions for sharing. Its config symlink currently conflicts with `ai-dotfiles` sync; see the architecture note above before relinking. Caches, logs, plugin caches, and SQLite runtime databases should stay local: Mode B does not select them, but Mode A needs explicit exclusions for agent paths not covered by its defaults. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
+Mode B leaves all of `~/.codex` local, including config, authentication, rules, memories, history, sessions, caches, logs, and SQLite databases. Codex sessions and login state therefore do not automatically follow you to another machine. Existing Codex symlinks or a `CODEX_HOME`/`sqlite_home` override pointing to EFS require separate migration; setup does not remove links or move existing Codex data. Mode A still needs an explicit `.codex` exclusion. Other agents such as OpenCode should be added here only after confirming their state paths and separating source-controlled config from runtime state.
 
 #### EFS guardrails (both modes)
 
-- Keep source checkouts separate from shared mutable state. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`; the effective Codex config may live on EFS and receive Git-managed defaults. In Mode A, the dotfiles checkouts are auto-excluded.
+- Keep source checkouts separate from shared mutable state. Skills, commands, settings, and top-level agent instructions come from `ai-dotfiles`; the effective Codex config stays local and receives Git-managed defaults. In Mode A, the dotfiles checkouts are auto-excluded.
 - Keep long-lived static credentials out of EFS — cloud access keys, service-account JSON, SSH private keys, and kube configs that reach production stay machine-local or in Ona secrets. Revocable per-user OAuth tokens for dev tooling may be linked, but only when the EFS volume is dedicated to a single user.
 - Do not share dependency caches or runtime databases unless there is a proven need. Keep package caches, plugin caches, logs, `node_modules`, virtualenvs, and SQLite/WAL files local. Mode A excludes a fixed list of common paths, not every cache or database; extend it for each integration.
 - Add new agents conservatively: identify their config paths, runtime-state paths, auth paths, and cache paths first, then decide whether the state is worth preserving — and in Mode A, whether anything needs an exclude.
@@ -485,11 +479,11 @@ DOTFILES_SKIP_EFS_STATE=1 just setup profile=linux-remote
 
 #### Switching from Mode B to Mode A
 
-Flipping `EFS_MOUNT_POINT` from `/home/vscode/.efs` to `/home/vscode` reuses the same EFS volume but remounts it over `$HOME`. The previously selectively-linked state (Claude projects, codex sessions, zsh history, etc.) will appear under `~/state/...` on the new mount instead of at its natural home-dir location. One-time migration after first boot on the new mount:
+Flipping `EFS_MOUNT_POINT` from `/efs-home` to `/home/vscode` reuses the same EFS volume but remounts it over `$HOME`. The previously selectively-linked state (Claude projects, zsh history, etc.) will appear under `~/state/...` on the new mount instead of at its natural home-dir location. One-time migration after first boot on the new mount:
 
 ```sh
 # Move runtime state into natural home-dir locations.
-for sub in claude codex shell gh acli; do
+for sub in claude shell gh acli; do
   [ -d ~/state/$sub ] && cp -an ~/state/$sub/. ~/  # adjust per layout
 done
 # Or, more conservatively, move specific paths:
