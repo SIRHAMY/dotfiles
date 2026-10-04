@@ -362,8 +362,7 @@ install-deps-mac-workstation:
     # no-op if it's already running.
     brew services start sketchybar
 
-# Install zellij from prebuilt binary. 0.44.0 added --tab-id/--pane-id to
-# rename-tab, which the agent tab-status hooks rely on to paint background tabs.
+# Install zellij from prebuilt binary, upgrading releases older than 0.44.0.
 [private]
 install-zellij:
     #!/usr/bin/env bash
