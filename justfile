@@ -4,7 +4,7 @@ os := `uname -s`
 # (`setup`, `all`, `check-conflicts`, `unstow-all`, `restow`, `plan`) all
 # resolve a profile via `_profile-context` and pick from these vars.
 packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin ssh"
-packages_common_workstation := "ghostty"
+packages_common_workstation := "ghostty zed"
 packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d opencode-web"
 packages_linux_remote       := "zsh-linux zsh-remote bash-remote opencode-web"
 packages_macos_workstation  := "zsh-macos aerospace sketchybar"

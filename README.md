@@ -125,6 +125,24 @@ export DOTFILES_PROFILE=linux-workstation
 
 Then plain `just setup` works again. See §15 for the remote-profile path and full precedence rules.
 
+### Zed settings
+
+Install [Zed](https://zed.dev/download) separately. Both workstation profiles link `packages/common/zed/.config/zed/settings.json` into `~/.config/zed/settings.json`. It enables Vim mode and preserves the shared font, theme, and autosave preferences.
+
+To link only Zed on an existing Linux or macOS machine:
+
+```sh
+cd ~/Code/dotfiles
+git pull --ff-only
+mkdir -p ~/.config/zed
+if [ -f ~/.config/zed/settings.json ] && [ ! -L ~/.config/zed/settings.json ]; then
+  mv ~/.config/zed/settings.json ~/.config/zed/settings.json.pre-stow.$(date +%Y%m%d-%H%M%S).bak
+fi
+stow --no-folding -d packages/common -t ~ zed
+```
+
+Edit settings through Zed or the repo file; the symlink keeps them together. Commit and push preference changes, then pull on other machines. Restart Zed if it does not pick up a pulled change. Zed credentials, sessions, and caches stay machine-local. Keep credentials and machine-specific paths out of this shared settings file.
+
 ## 8. macOS setup
 
 After `just setup` finishes, three manual one-time steps:

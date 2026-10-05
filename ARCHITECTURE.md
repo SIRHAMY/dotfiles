@@ -44,6 +44,8 @@ Codex configuration, authentication, sessions, and runtime state belong on local
 
 ## Other integration choices
 
+**Zed:** both workstation profiles stow shared Vim, font, theme, and autosave preferences from `packages/common/zed`. The active settings file links into Git, so edits through Zed change the checkout and require a commit/push to reach another machine. Install Zed separately; credentials, sessions, and caches remain local.
+
 **OpenCode:** both Linux profiles use one loopback user service for Web and `oc`, so terminal and browser share sessions. Only workstations publish it through Tailscale Serve. Credentials belong in local `server.env`. See the [service contract](README.md#16-opencode-web-service-linux).
 
 **Install sources:** use upstream distributions and verify provenance separately from deciding whether to pin versions. OpenCode currently pins its official installer and checks its hash. Codex currently downloads an unpinned official GitHub release without a checksum check and skips any existing `codex` executable; this does not enforce upgrades or validate an existing installation's source.
