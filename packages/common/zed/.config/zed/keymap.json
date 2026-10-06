@@ -1,0 +1,8 @@
+[
+  {
+    "context": "ProjectPanel && not_editing",
+    "bindings": {
+      "ctrl-r": "project_panel::Rename"
+    }
+  }
+]
