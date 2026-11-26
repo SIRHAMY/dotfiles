@@ -107,8 +107,7 @@
         "format-linked": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf796;</span> NO IP",
         "format-disconnected": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf1eb;</span> --",
         "tooltip-format": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}\nUse the network tray icon to manage connections",
-        "interval": 5,
-        "on-click": "pgrep -u $USER -x nm-applet >/dev/null || nm-applet"
+        "interval": 5
     },
 
     "custom/bandwidth": {
