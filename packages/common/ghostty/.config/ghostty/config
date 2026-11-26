@@ -49,6 +49,7 @@
 # resize-overlay-duration = 4s 200ms
 
 theme = terminal-garden
+command = zsh
 window-theme = ghostty
 
 # Copy terminal selections; otherwise let Zellij handle Ctrl+Shift+C.

@@ -141,6 +141,7 @@ setup profile="":
             just install-cliphist
             just install-atomic-appimages
             just setup-ai-dotfiles "$profile"
+            just setup-login-shell interactive
             ;;
         linux-workstation)
             just setup-opencode-web "$profile" provision
@@ -173,9 +174,9 @@ setup-efs-state:
 setup-opencode-web profile phase:
     bash ./scripts/setup-opencode-web.sh "{{profile}}" "{{phase}}"
 
-# Best-effort login shell update for containers that allow passwordless sudo.
-setup-login-shell:
-    bash ./scripts/setup-login-shell.sh
+# Update the login shell; workstation mode may request authentication in a terminal.
+setup-login-shell mode="noninteractive":
+    bash ./scripts/setup-login-shell.sh "{{mode}}"
 
 # Resolve+validate+derive profile dispatch context (WRK-002). Single source of
 # truth used by every profile-aware recipe (setup, all, check-conflicts,

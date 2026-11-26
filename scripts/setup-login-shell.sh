@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+mode="${1:-noninteractive}"
+case "$mode" in
+  interactive|noninteractive) ;;
+  *) echo "Unknown login-shell setup mode: $mode" >&2; exit 1 ;;
+esac
+
 if [ "${DOTFILES_SKIP_LOGIN_SHELL:-0}" = "1" ]; then
   echo "setup-login-shell: skipped because DOTFILES_SKIP_LOGIN_SHELL=1"
   exit 0
@@ -25,6 +31,21 @@ if command -v sudo >/dev/null 2>&1 &&
   command -v usermod >/dev/null 2>&1; then
   sudo usermod --shell "$zsh_path" "$user_name"
   echo "setup-login-shell: changed $user_name login shell to $zsh_path"
+  exit 0
+fi
+
+if [ "$mode" = "interactive" ]; then
+  if [ -t 0 ] && [ -t 1 ] && command -v chsh >/dev/null 2>&1; then
+    echo "Changing your login shell to zsh (your password may be requested)."
+    chsh -s "$zsh_path" "$user_name"
+    if [ "$(getent passwd "$user_name" | awk -F: '{print $7}')" != "$zsh_path" ]; then
+      echo "setup-login-shell: login shell did not change." >&2
+      exit 1
+    fi
+    echo "setup-login-shell: changed $user_name login shell to $zsh_path"
+    exit 0
+  fi
+  echo "setup-login-shell: run 'just setup-login-shell interactive' in a terminal to authenticate and change your login shell." >&2
   exit 0
 fi
 
