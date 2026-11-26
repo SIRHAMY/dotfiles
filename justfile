@@ -139,6 +139,7 @@ setup profile="":
             just configure-atomic-browser
             just configure-atomic-appearance
             just install-cliphist
+            just install-atomic-appimages
             just setup-ai-dotfiles "$profile"
             ;;
         linux-workstation)
@@ -318,6 +319,10 @@ check-atomic-sway-prerequisites:
       echo "Install Git and GNU Stow on the host before running setup. See README.md." >&2
       exit 1
     fi
+
+# Install desktop apps in user space without layering RPMs on the Atomic host.
+install-atomic-appimages:
+    bash ./scripts/install-atomic-appimages.sh
 
 # Reconcile the preferred browser without replacing unrelated MIME associations.
 [private]
