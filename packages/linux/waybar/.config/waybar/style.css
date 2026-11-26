@@ -163,3 +163,27 @@ window#waybar {
 #tray > .needs-attention {
     -gtk-icon-effect: highlight;
 }
+
+/* GTK tray popups, including NetworkManager's menu. */
+menu {
+    background-color: #151515;
+    color: #dedede;
+    border: 1px solid #303030;
+}
+
+menuitem {
+    color: #dedede;
+}
+
+menuitem:hover {
+    background-color: #24372e;
+    color: #ffffff;
+}
+
+menuitem:disabled {
+    color: #777777;
+}
+
+menu separator {
+    background-color: #303030;
+}

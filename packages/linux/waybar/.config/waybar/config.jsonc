@@ -108,7 +108,7 @@
         "format-disconnected": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf1eb;</span> --",
         "tooltip-format": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}",
         "interval": 5,
-        "on-click": "if command -v ghostty >/dev/null && command -v nmtui >/dev/null; then ghostty --class=floating-launcher -e nmtui connect; else nm-connection-editor; fi"
+        "on-click": "env GTK_THEME=Adwaita:dark nm-connection-editor"
     },
 
     "custom/bandwidth": {

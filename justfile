@@ -360,7 +360,7 @@ install-deps-linux-workstation:
           grim slurp wl-clipboard wtype brightnessctl playerctl gtk-layer-shell \
           zsh-autosuggestions zsh-syntax-highlighting \
           ibm-plex-sans-fonts ibm-plex-mono-fonts \
-           NetworkManager-tui gnome-keyring flatpak jq)
+           network-manager-applet nm-connection-editor gnome-keyring flatpak jq)
     echo "Installing with dnf: ${deps[*]}"
     sudo dnf install -y "${deps[@]}"
     just install-zellij
