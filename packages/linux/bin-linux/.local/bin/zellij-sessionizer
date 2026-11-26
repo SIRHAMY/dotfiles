@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# zellij-sessionizer — fuzzy-pick a project from ~/Code/ and jump into a zellij session
+# zellij-sessionizer — fuzzy-pick a project and jump into a zellij session
 
 # Bail if already inside zellij
 if [[ -n "$ZELLIJ" ]]; then
@@ -11,8 +11,10 @@ fi
 active_sessions=$(zellij list-sessions --short 2>/dev/null)
 
 # Build the project list, marking active sessions with *
+project_root="$HOME/code"
+[[ -d "$project_root" ]] || project_root="$HOME/Code"
 project_list=""
-for dir in "$HOME"/Code/*/; do
+for dir in "$project_root"/*/; do
     [[ -d "$dir" ]] || continue
     name=$(basename "$dir")
     if echo "$active_sessions" | grep -qx "$name"; then
@@ -31,6 +33,11 @@ selected=$(echo -n "$project_list" | fzf --reverse --prompt="project > ")
 # Strip the leading marker and whitespace
 name=$(echo "$selected" | sed 's/^[* ] *//')
 
-# Ask sway to launch a new terminal with the zellij session (fully independent of the picker)
-ZELLIJ_BIN="$HOME/.local/bin/zellij"
-swaymsg exec "ghostty --working-directory='$HOME/Code/$name' -e $ZELLIJ_BIN -l dev attach '$name' -c"
+# Launch the selected project independently of the picker.
+if command -v ghostty >/dev/null; then
+    terminal=(ghostty "--working-directory=$project_root/$name" -e)
+else
+    terminal=(foot "--working-directory=$project_root/$name")
+fi
+printf -v launch_command '%q ' "${terminal[@]}" "$HOME/.local/bin/zellij" -l dev attach "$name" -c
+swaymsg exec "$launch_command"
