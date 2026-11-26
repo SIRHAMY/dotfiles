@@ -41,7 +41,7 @@
     },
 
     "cpu": {
-        "format": "<span font='Font Awesome 6 Free Solid'>&#xf2db;</span> {usage}%",
+        "format": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf2db;</span> {usage}%",
         "tooltip-format": "CPU: {usage}% ({avg_frequency}GHz)\n{load} load average",
         "interval": 5,
         "states": {
@@ -52,7 +52,7 @@
     },
 
     "memory": {
-        "format": "<span font='Font Awesome 6 Free Solid'>&#xf538;</span> {percentage}%",
+        "format": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf538;</span> {percentage}%",
         "tooltip-format": "{used:0.1f}G / {total:0.1f}G\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G",
         "interval": 10,
         "states": {
@@ -64,7 +64,7 @@
 
     "disk": {
         "interval": 30,
-        "format": "<span font='Font Awesome 6 Free Solid'>&#xf0a0;</span> {percentage_used}%",
+        "format": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf0a0;</span> {percentage_used}%",
         "path": "/",
         "tooltip-format": "{used} / {total} ({percentage_used}%)\n{free} free on {path}"
     },
@@ -77,27 +77,27 @@
             "critical": 15
         },
         "format": "{icon} {capacity}%",
-        "format-charging": "<span font='Font Awesome 6 Free Solid'>&#xf0e7;</span> {capacity}%",
-        "format-plugged": "<span font='Font Awesome 6 Free Solid'>&#xf1e6;</span> {capacity}%",
-        "format-full": "<span font='Font Awesome 6 Free Solid'>&#xf240;</span> {capacity}%",
+        "format-charging": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf0e7;</span> {capacity}%",
+        "format-plugged": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf1e6;</span> {capacity}%",
+        "format-full": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf240;</span> {capacity}%",
         "format-icons": [
-            "<span font='Font Awesome 6 Free Solid'>&#xf244;</span>",
-            "<span font='Font Awesome 6 Free Solid'>&#xf243;</span>",
-            "<span font='Font Awesome 6 Free Solid'>&#xf242;</span>",
-            "<span font='Font Awesome 6 Free Solid'>&#xf241;</span>",
-            "<span font='Font Awesome 6 Free Solid'>&#xf240;</span>"
+            "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf244;</span>",
+            "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf243;</span>",
+            "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf242;</span>",
+            "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf241;</span>",
+            "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf240;</span>"
         ],
         "tooltip-format": "{timeTo}\n{power:.1f}W"
     },
 
     "network": {
-        "format-wifi": "<span font='Font Awesome 6 Free Solid'>&#xf1eb;</span> {signalStrength}%",
-        "format-ethernet": "<span font='Font Awesome 6 Free Solid'>&#xf796;</span>",
-        "format-linked": "<span font='Font Awesome 6 Free Solid'>&#xf796;</span> NO IP",
-        "format-disconnected": "<span font='Font Awesome 6 Free Solid'>&#xf1eb;</span> --",
+        "format-wifi": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf1eb;</span> {signalStrength}%",
+        "format-ethernet": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf796;</span>",
+        "format-linked": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf796;</span> NO IP",
+        "format-disconnected": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf1eb;</span> --",
         "tooltip-format": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}",
         "interval": 5,
-        "on-click": "ghostty --class=floating-launcher -e nmtui connect"
+        "on-click": "if command -v ghostty >/dev/null && command -v nmtui >/dev/null; then ghostty --class=floating-launcher -e nmtui connect; else nm-connection-editor; fi"
     },
 
     "custom/bandwidth": {
@@ -108,13 +108,13 @@
 
     "pulseaudio": {
         "format": "{icon} {volume}%",
-        "format-muted": "<span font='Font Awesome 6 Free Solid'>&#xf6a9;</span> MUTE",
-        "format-bluetooth": "<span font='Font Awesome 6 Free Solid'>&#xf294;</span> {volume}%",
+        "format-muted": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf6a9;</span> MUTE",
+        "format-bluetooth": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf294;</span> {volume}%",
         "format-icons": {
             "default": [
-                "<span font='Font Awesome 6 Free Solid'>&#xf026;</span>",
-                "<span font='Font Awesome 6 Free Solid'>&#xf027;</span>",
-                "<span font='Font Awesome 6 Free Solid'>&#xf028;</span>"
+                "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf026;</span>",
+                "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf027;</span>",
+                "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf028;</span>"
             ]
         },
         "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
@@ -123,7 +123,7 @@
     },
 
     "backlight": {
-        "format": "<span font='Font Awesome 6 Free Solid'>&#xf185;</span> {percent}%",
+        "format": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf185;</span> {percent}%",
         "tooltip": false
     },
 

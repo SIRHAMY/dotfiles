@@ -133,14 +133,16 @@ Boot and update stock Fedora Sway Atomic first. Check the touchpad and suspend b
 rpm-ostree install --allow-inactive git just stow
 ```
 
-From the dotfiles checkout, preview and link the portable workstation settings.
+Clone the Atomic branch (if needed), then preview and link the workstation settings.
 
 ```sh
+git clone --branch fedora-atomic-sway-workstation https://github.com/SIRHAMY/dotfiles.git ~/code/dotfiles
+cd ~/code/dotfiles
 just plan profile=fedora-atomic-sway-workstation
 just setup profile=fedora-atomic-sway-workstation
 ```
 
-This profile links Zsh, tmux, Zellij, Neovim, Yazi, Git, Ghostty, and Zed settings. Fedora provides the login session, Sway configuration, and desktop defaults. Install the apps you use separately and add Sway keybindings, theme, and display profiles after verifying the stock session. Manage AI preferences through the separate `ai-dotfiles` checkout.
+This profile links Zsh, tmux, Zellij, Neovim, Yazi, Git, Ghostty, Zed, and Waybar settings, plus the shared Zellij tab-switcher helper. Fedora provides the login session and base Sway configuration; the `sway-atomic` package adds natural scrolling and tap-to-click through Fedora’s per-user `config.d` drop-ins. Setup prefers dark desktop appearance through GSettings and the desktop portal. If the Google Chrome Flatpak is installed, setup sets it as the default browser without replacing other MIME associations. Install the apps you use separately and add further Sway keybindings, theme, and display profiles after verifying the stock session. Manage AI preferences through the separate `ai-dotfiles` checkout.
 
 To remove the links, run `just unstow-all profile=fedora-atomic-sway-workstation` from the same checkout.
 

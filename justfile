@@ -5,7 +5,8 @@ os := `uname -s`
 # resolve a profile via `_profile-context` and pick from these vars.
 packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin ssh"
 packages_common_workstation := "ghostty zed"
-packages_common_atomic      := "zsh tmux zellij nvim yazi git ghostty zed"
+packages_common_atomic      := "zsh tmux zellij nvim yazi git ghostty zed bin"
+packages_linux_atomic       := "sway-atomic waybar"
 packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d opencode-web"
 packages_linux_remote       := "zsh-linux zsh-remote bash-remote opencode-web"
 packages_macos_workstation  := "zsh-macos aerospace sketchybar"
@@ -134,6 +135,10 @@ setup profile="":
     esac
     just all profile="$profile"
     case "$profile" in
+        fedora-atomic-sway-workstation)
+            just configure-atomic-browser
+            just configure-atomic-appearance
+            ;;
         linux-workstation)
             just setup-opencode-web "$profile" provision
             just setup-sway-session
@@ -235,7 +240,7 @@ _profile-context profile="":
       fedora-atomic-sway-workstation)
                          common_pkgs="{{packages_common_atomic}}"
                          os_bucket="linux"
-                         os_pkgs=""
+                         os_pkgs="{{packages_linux_atomic}}"
                          deps_recipe="check-atomic-sway-prerequisites" ;;
       linux-remote)      common_pkgs="{{packages_common_cli}}"
                          os_bucket="linux"
@@ -303,6 +308,29 @@ check-atomic-sway-prerequisites:
       echo "Install Git and GNU Stow on the host before running setup. See README.md." >&2
       exit 1
     fi
+
+# Reconcile the preferred browser without replacing unrelated MIME associations.
+[private]
+configure-atomic-browser:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    desktop=com.google.Chrome.desktop
+    if ! command -v flatpak >/dev/null || ! flatpak info com.google.Chrome >/dev/null 2>&1; then
+      echo "Chrome Flatpak not installed; keeping the current default browser."
+      exit 0
+    fi
+    xdg-settings set default-web-browser "$desktop"
+    xdg-mime default "$desktop" x-scheme-handler/http x-scheme-handler/https text/html application/xhtml+xml
+    echo "Chrome set as the default browser."
+
+# Prefer dark appearance through the desktop portal and legacy GTK theme.
+[private]
+configure-atomic-appearance:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+    gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
+    echo "Dark desktop appearance set."
 
 # Install dependencies for the linux-workstation profile (Fedora dnf + GUI deps).
 # Profile-blind: assumes it is being invoked on a Fedora host. Body lifted from

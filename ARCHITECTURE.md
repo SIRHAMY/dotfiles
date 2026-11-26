@@ -9,7 +9,7 @@ The [README](README.md) contains commands and operational details. This document
 | Profile | Needs | Boundary |
 | --- | --- | --- |
 | `linux-workstation` | Fedora CLI tools, Ghostty, Sway desktop, OpenCode Web through Tailscale | Full interactive workstation |
-| `fedora-atomic-sway-workstation` | Fedora Sway Atomic with Git, Just, and GNU Stow | Portable user settings on the stock Sway session |
+| `fedora-atomic-sway-workstation` | Fedora Sway Atomic with Git, Just, and GNU Stow | Personal user settings and Waybar on the stock Sway session |
 | `mac-workstation` | Homebrew CLI tools, Ghostty, AeroSpace desktop | macOS equivalents of the shared environment |
 | `linux-remote` | Headless CLI tools on apt/dnf systems, OpenCode backend, AI config, optional EFS | No desktop packages or Tailscale dependency |
 
@@ -17,7 +17,7 @@ Desired Codex coverage is CLI on every profile and desktop app on workstations o
 
 ## Setup and ownership
 
-[justfile](justfile) resolves an explicit profile, prepares dependencies, checks conflicts, stows packages, then provisions profile-specific services where applicable. The Atomic workstation checks its prerequisites and links user settings. `profile=` overrides `DOTFILES_PROFILE`; missing selection fails. [bootstrap.sh](bootstrap.sh) defaults to `linux-remote` for remote provisioning.
+[justfile](justfile) resolves an explicit profile, prepares dependencies, checks conflicts, stows packages, then provisions profile-specific services where applicable. The Atomic workstation checks its prerequisites, links user settings and Sway drop-ins, and applies the preferred browser and appearance. `profile=` overrides `DOTFILES_PROFILE`; missing selection fails. [bootstrap.sh](bootstrap.sh) defaults to `linux-remote` for remote provisioning.
 
 Public OS/tool configuration lives here. Common packages plus OS-specific packages compose each profile; Stow links them into the home directory. Filesystem-based OS separation keeps shared config readable. Preserve the [loader contract](README.md#3-loader-contract--5-rules) when extending it.
 

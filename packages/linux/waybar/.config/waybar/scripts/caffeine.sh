@@ -52,10 +52,10 @@ status() {
 
     case "$state" in
         on)
-            printf '{"text": "<span font='\''Font Awesome 6 Free Solid'\''>&#xf06e;</span>", "tooltip": "Caffeine: ON — no sleep, no lock", "class": "on"}\n'
+            printf '{"text": "<span font_family='\''Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'\''>&#xf06e;</span>", "tooltip": "Caffeine: ON — no sleep, no lock", "class": "on"}\n'
             ;;
         *)
-            printf '{"text": "<span font='\''Font Awesome 6 Free Solid'\''>&#xf070;</span>", "tooltip": "Caffeine: OFF — normal sleep and lock", "class": "off"}\n'
+            printf '{"text": "<span font_family='\''Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'\''>&#xf070;</span>", "tooltip": "Caffeine: OFF — normal sleep and lock", "class": "off"}\n'
             ;;
     esac
 }
