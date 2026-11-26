@@ -115,7 +115,7 @@ just setup profile=linux-workstation   # Fedora desktop
 just setup profile=mac-workstation     # Mac
 ```
 
-`just setup profile=<name>` runs the matching `install-deps-<profile>` recipe (dnf on Fedora workstation; brew + casks on Mac), including the pinned official OpenCode v1.18.3 installer for every profile, then `check-conflicts`, then `all` (per-bucket stow). On `linux-workstation` it also runs `setup-sway-session`.
+`just setup profile=<name>` prepares dependencies and links the profile's settings with Stow. The conventional Fedora workstation and Mac profiles install dependencies and the pinned OpenCode version. `linux-workstation` also runs `setup-sway-session`. The Fedora Sway Atomic profile checks for its prerequisites and links user settings.
 
 **Profile is required** — `just setup` with no profile and no `$DOTFILES_PROFILE` exits with a list of valid profiles for the current OS. For ergonomic muscle memory, export the profile once in your shell rc (e.g. `~/.zprofile`):
 
@@ -125,9 +125,28 @@ export DOTFILES_PROFILE=linux-workstation
 
 Then plain `just setup` works again. See §15 for the remote-profile path and full precedence rules.
 
+### Fedora Sway Atomic workstation
+
+Boot and update stock Fedora Sway Atomic first. Check the touchpad and suspend before applying personal settings. Install the bootstrap tools on the host if they are missing, then reboot into the updated deployment.
+
+```sh
+rpm-ostree install --allow-inactive git just stow
+```
+
+From the dotfiles checkout, preview and link the portable workstation settings.
+
+```sh
+just plan profile=fedora-atomic-sway-workstation
+just setup profile=fedora-atomic-sway-workstation
+```
+
+This profile links Zsh, tmux, Zellij, Neovim, Yazi, Git, Ghostty, and Zed settings. Fedora provides the login session, Sway configuration, and desktop defaults. Install the apps you use separately and add Sway keybindings, theme, and display profiles after verifying the stock session. Manage AI preferences through the separate `ai-dotfiles` checkout.
+
+To remove the links, run `just unstow-all profile=fedora-atomic-sway-workstation` from the same checkout.
+
 ### Zed settings
 
-Install [Zed](https://zed.dev/download) separately. Both workstation profiles link `packages/common/zed/.config/zed/settings.json` into `~/.config/zed/settings.json`. It enables Vim mode and preserves the shared font, theme, and autosave preferences.
+Install [Zed](https://zed.dev/download) separately. The workstation profiles link `packages/common/zed/.config/zed/settings.json` into `~/.config/zed/settings.json`. It enables Vim mode and preserves the shared theme and autosave preferences.
 
 To link only Zed on an existing Linux or macOS machine:
 
@@ -331,7 +350,7 @@ For a focused-workspace-only view: `swaymsg -t get_tree | jq '.. | select(.type?
 
 ## 15. Remote profile
 
-A second axis on top of the `{common,linux,macos}` package buckets: **profile**. Three v1 profiles — `linux-workstation` (Fedora desktop with sway/waybar/etc.), `linux-remote` (headless dev essentials only), `mac-workstation` (Mac with AeroSpace/SketchyBar). Profile selects which buckets to stow and which `install-deps-*` recipe to run. The OS axis stays unchanged.
+A **profile** selects packages from the `{common,linux,macos}` buckets and determines how setup prepares dependencies. The profiles are `linux-workstation` for conventional Fedora, `fedora-atomic-sway-workstation` for stock Fedora Sway Atomic, `linux-remote` for headless development, and `mac-workstation` for Mac with AeroSpace and SketchyBar.
 
 ### Invocation
 
@@ -604,14 +623,14 @@ just setup profile=linux-remote
 
 ## 16. OpenCode Web service (Linux)
 
-Both Linux profiles stow and provision one `systemd --user` service that runs `opencode serve` on `127.0.0.1:4096`. The `oc` command starts or reuses that service, waits for its health endpoint using the configured authentication mode, and attaches a TUI to the current working directory. OpenCode Web and `oc` therefore use the same backend and can see the same sessions. `linux-workstation` also publishes that loopback service privately through Tailscale Serve; `linux-remote` stays local-only and neither requires nor invokes Tailscale.
+`linux-workstation` and `linux-remote` stow and provision one `systemd --user` service that runs `opencode serve` on `127.0.0.1:4096`. The `oc` command starts or reuses that service, waits for its health endpoint using the configured authentication mode, and attaches a TUI to the current working directory. OpenCode Web and `oc` therefore use the same backend and can see the same sessions. `linux-workstation` publishes that loopback service privately through Tailscale Serve. `linux-remote` keeps the service local.
 
 ### Prerequisites and security
 
 Install these before using `oc`:
 
 - `just setup` installs and verifies OpenCode v1.18.3 at `~/.opencode/bin/opencode` with its pinned official installer. It does not use Homebrew because that executable path conflicts with the service contract.
-- `curl` and a working `systemd --user` manager are required by `oc` and setup on both Linux profiles.
+- `curl` and a working `systemd --user` manager are required by `oc` and OpenCode Web setup.
 - `linux-workstation` additionally requires a running, connected Tailscale client and one-time operator authorization for the setup user: `sudo tailscale set --operator="$USER"`. `linux-remote` does not require Tailscale or a tailnet.
 - `jq` is required only when setup must migrate an existing `~/.config/opencode/config.json`.
 

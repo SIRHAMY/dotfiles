@@ -9,14 +9,15 @@ The [README](README.md) contains commands and operational details. This document
 | Profile | Needs | Boundary |
 | --- | --- | --- |
 | `linux-workstation` | Fedora CLI tools, Ghostty, Sway desktop, OpenCode Web through Tailscale | Full interactive workstation |
+| `fedora-atomic-sway-workstation` | Fedora Sway Atomic with Git, Just, and GNU Stow | Portable user settings on the stock Sway session |
 | `mac-workstation` | Homebrew CLI tools, Ghostty, AeroSpace desktop | macOS equivalents of the shared environment |
 | `linux-remote` | Headless CLI tools on apt/dnf systems, OpenCode backend, AI config, optional EFS | No desktop packages or Tailscale dependency |
 
-Desired Codex coverage is CLI on every profile and desktop app on workstations only. **Not fully implemented:** Linux profiles install the CLI; macOS CLI and desktop app installation are not managed here yet. The Codex version-pinning policy remains undecided.
+Desired Codex coverage is CLI on every profile and desktop app on workstations only. The conventional Linux workstation and remote profiles install the CLI. The Atomic workstation and macOS profiles leave Codex installation to the user. The Codex version-pinning policy remains undecided.
 
 ## Setup and ownership
 
-[justfile](justfile) resolves an explicit profile, installs dependencies, checks conflicts, stows packages, then provisions profile-specific services. `profile=` overrides `DOTFILES_PROFILE`; missing selection fails. [bootstrap.sh](bootstrap.sh) defaults to `linux-remote` for remote provisioning.
+[justfile](justfile) resolves an explicit profile, prepares dependencies, checks conflicts, stows packages, then provisions profile-specific services where applicable. The Atomic workstation checks its prerequisites and links user settings. `profile=` overrides `DOTFILES_PROFILE`; missing selection fails. [bootstrap.sh](bootstrap.sh) defaults to `linux-remote` for remote provisioning.
 
 Public OS/tool configuration lives here. Common packages plus OS-specific packages compose each profile; Stow links them into the home directory. Filesystem-based OS separation keeps shared config readable. Preserve the [loader contract](README.md#3-loader-contract--5-rules) when extending it.
 
@@ -44,8 +45,8 @@ Codex configuration, authentication, sessions, and runtime state belong on local
 
 ## Other integration choices
 
-**Zed:** both workstation profiles stow shared Vim, font, theme, and autosave preferences from `packages/common/zed`. The active settings file links into Git, so edits through Zed change the checkout and require a commit/push to reach another machine. Install Zed separately; credentials, sessions, and caches remain local.
+**Zed:** workstation profiles stow shared Vim, theme, and autosave preferences from `packages/common/zed`. The active settings file links into Git, so edits through Zed change the checkout and require a commit/push to reach another machine. Install Zed separately; credentials, sessions, and caches remain local.
 
-**OpenCode:** both Linux profiles use one loopback user service for Web and `oc`, so terminal and browser share sessions. Only workstations publish it through Tailscale Serve. Credentials belong in local `server.env`. See the [service contract](README.md#16-opencode-web-service-linux).
+**OpenCode:** `linux-workstation` and `linux-remote` use one loopback user service for Web and `oc`, so terminal and browser share sessions. `linux-workstation` publishes it through Tailscale Serve. Credentials belong in local `server.env`. See the [service contract](README.md#16-opencode-web-service-linux).
 
 **Install sources:** use upstream distributions and verify provenance separately from deciding whether to pin versions. OpenCode currently pins its official installer and checks its hash. Codex currently downloads an unpinned official GitHub release without a checksum check and skips any existing `codex` executable; this does not enforce upgrades or validate an existing installation's source.

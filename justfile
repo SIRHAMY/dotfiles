@@ -5,6 +5,7 @@ os := `uname -s`
 # resolve a profile via `_profile-context` and pick from these vars.
 packages_common_cli         := "zsh tmux zellij nvim yazi git bash bin ssh"
 packages_common_workstation := "ghostty zed"
+packages_common_atomic      := "zsh tmux zellij nvim yazi git ghostty zed"
 packages_linux_workstation  := "zsh-linux bin-linux sway swaylock waybar mako wofi fontconfig environment.d opencode-web"
 packages_linux_remote       := "zsh-linux zsh-remote bash-remote opencode-web"
 packages_macos_workstation  := "zsh-macos aerospace sketchybar"
@@ -21,7 +22,11 @@ all profile="":
     if [ -n "$os_pkgs" ]; then
       just _stow-bucket "$os_bucket" $os_pkgs
     fi
-    echo "Done. Run 'just reload' on Linux to reload sway/waybar."
+    if [ "$profile" = fedora-atomic-sway-workstation ]; then
+      echo "Done. Portable workstation settings linked."
+    else
+      echo "Done. Run 'just reload' on Linux to reload sway/waybar."
+    fi
 
 # Unlink everything (reversibility — PRD NFR). OS bucket unwinds first so any
 # OS-specific directory guards get cleaned up before the common owner.
@@ -185,7 +190,7 @@ _profile-context profile="":
 
     os="$(uname -s)"
     case "$os" in
-      Linux)  valid="linux-workstation linux-remote" ;;
+      Linux)  valid="linux-workstation linux-remote fedora-atomic-sway-workstation" ;;
       Darwin) valid="mac-workstation" ;;
       *)      echo "Unsupported OS: $os" >&2; exit 2 ;;
     esac
@@ -227,6 +232,11 @@ _profile-context profile="":
                          os_bucket="linux"
                          os_pkgs="{{packages_linux_workstation}}"
                          deps_recipe="install-deps-linux-workstation" ;;
+      fedora-atomic-sway-workstation)
+                         common_pkgs="{{packages_common_atomic}}"
+                         os_bucket="linux"
+                         os_pkgs=""
+                         deps_recipe="check-atomic-sway-prerequisites" ;;
       linux-remote)      common_pkgs="{{packages_common_cli}}"
                          os_bucket="linux"
                          os_pkgs="{{packages_linux_remote}}"
@@ -280,6 +290,19 @@ _plan-bucket bucket *pkgs:
       echo "=== $pkg ==="
       stow -n -v --no-folding -d packages/{{bucket}} -t ~ "$pkg" 2>&1
     done
+
+[private]
+check-atomic-sway-prerequisites:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! -e /run/ostree-booted ]] || ! rpm -q fedora-release-identity-sway-atomic >/dev/null 2>&1; then
+      echo "Run this setup on a booted Fedora Sway Atomic host." >&2
+      exit 1
+    fi
+    if ! command -v stow >/dev/null || ! command -v git >/dev/null; then
+      echo "Install Git and GNU Stow on the host before running setup. See README.md." >&2
+      exit 1
+    fi
 
 # Install dependencies for the linux-workstation profile (Fedora dnf + GUI deps).
 # Profile-blind: assumes it is being invoked on a Fedora host. Body lifted from
