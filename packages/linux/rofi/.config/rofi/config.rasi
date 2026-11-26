@@ -1,0 +1,8 @@
+configuration {
+    show-icons: true;
+    matching: "fuzzy";
+    drun-display-format: "{name}";
+    combi-hide-mode-prefix: true;
+}
+
+@theme "hamy"

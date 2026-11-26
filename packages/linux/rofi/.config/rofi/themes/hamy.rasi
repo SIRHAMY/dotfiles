@@ -1,0 +1,80 @@
+* {
+    font: "IBM Plex Sans 13";
+    canvas: #0d0d0d;
+    foreground: #dedede;
+    accent: #10b981;
+    muted: #5e6570;
+    background-color: transparent;
+    text-color: @foreground;
+}
+
+window {
+    location: center;
+    anchor: center;
+    width: 500px;
+    background-color: @canvas;
+    border: 2px;
+    border-color: @foreground;
+    border-radius: 8px;
+    padding: 0;
+}
+
+mainbox {
+    children: [ inputbar, message, listview ];
+}
+
+inputbar {
+    children: [ entry ];
+    background-color: #1e1e1e;
+    border-color: @accent;
+    border: 0px 0px 1px 0px;
+    border-radius: 6px 6px 0px 0px;
+    padding: 10px 14px;
+}
+
+entry {
+    placeholder: "Search…";
+    placeholder-color: @muted;
+    font: "IBM Plex Sans 14";
+}
+
+listview {
+    lines: 7;
+    columns: 1;
+    fixed-height: true;
+    scrollbar: false;
+    spacing: 2px;
+    padding: 4px;
+}
+
+element {
+    children: [ element-icon, element-text ];
+    spacing: 8px;
+    padding: 5px 10px;
+    border: 1px;
+    border-color: transparent;
+    border-radius: 4px;
+}
+
+element selected {
+    border-color: @accent;
+    background-color: #0f211a;
+}
+
+element-text {
+    text-color: inherit;
+    vertical-align: 0.5;
+}
+
+element-icon {
+    size: 24px;
+    vertical-align: 0.5;
+}
+
+message {
+    padding: 6px 10px;
+}
+
+textbox {
+    text-color: @foreground;
+}
