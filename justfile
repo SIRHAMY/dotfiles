@@ -138,6 +138,7 @@ setup profile="":
         fedora-atomic-sway-workstation)
             just configure-atomic-browser
             just configure-atomic-appearance
+            just setup-ai-dotfiles "$profile"
             ;;
         linux-workstation)
             just setup-opencode-web "$profile" provision
@@ -151,8 +152,16 @@ setup profile="":
             ;;
     esac
 
-# Clone/update the private AI dotfiles checkout and link its Claude config.
-setup-ai-dotfiles:
+# Clone/update the private AI dotfiles checkout and link shared agent configs.
+setup-ai-dotfiles profile="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    profile="{{profile}}"
+    profile="${profile#profile=}"
+    if [ "$profile" = fedora-atomic-sway-workstation ]; then
+      export AI_DOTFILES_DIR="${AI_DOTFILES_DIR:-$HOME/code/ai-dotfiles}"
+      export AI_DOTFILES_REPO="${AI_DOTFILES_REPO:-https://github.com/SIRHAMY/ai-dotfiles.git}"
+    fi
     ./scripts/setup-ai-dotfiles.sh
 
 # Link selected mutable runtime state into Ona EFS when EFS_MOUNT_POINT is set.

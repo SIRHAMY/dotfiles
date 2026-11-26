@@ -21,7 +21,7 @@ Desired Codex coverage is CLI on every profile and desktop app on workstations o
 
 Public OS/tool configuration lives here. Common packages plus OS-specific packages compose each profile; Stow links them into the home directory. Filesystem-based OS separation keeps shared config readable. Preserve the [loader contract](README.md#3-loader-contract--5-rules) when extending it.
 
-Private `ai-dotfiles` owns portable agent instructions, skills, and preferences. Only the remote profile automatically runs [setup-ai-dotfiles.sh](scripts/setup-ai-dotfiles.sh), then [setup-efs-state.sh](scripts/setup-efs-state.sh). Workstations manage AI configuration separately. Keeping installation here and AI defaults there avoids duplicating ownership.
+Private `ai-dotfiles` owns portable agent instructions, skills, and preferences. The Atomic workstation and remote profiles automatically run [setup-ai-dotfiles.sh](scripts/setup-ai-dotfiles.sh); the remote profile also runs [setup-efs-state.sh](scripts/setup-efs-state.sh). The Atomic profile uses the private HTTPS checkout under `~/code/ai-dotfiles` and supports the same opt-out. Other workstations manage AI configuration separately. Keeping installation here and AI defaults there avoids duplicating ownership.
 
 ## Git, EFS, and machine-local state
 
