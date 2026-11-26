@@ -31,7 +31,7 @@
     },
 
     "power-profiles-daemon": {
-        "format": "{icon} {profile}",
+        "format": "{icon}",
         "tooltip-format": "Power profile: {profile}\nClick to cycle power saver, balanced, and performance",
         "format-icons": {
             "default": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf0e7;</span>",
