@@ -4,7 +4,7 @@
     "height": 28,
     "spacing": 2,
 
-    "modules-left": ["cpu", "memory", "disk", "custom/caffeine", "sway/mode", "sway/window"],
+    "modules-left": ["cpu", "memory", "disk", "custom/caffeine", "power-profiles-daemon", "sway/mode", "sway/window"],
     "modules-center": ["sway/workspaces"],
     "modules-right": [
         "tray",
@@ -28,6 +28,17 @@
 
     "sway/window": {
         "max-length": 50
+    },
+
+    "power-profiles-daemon": {
+        "format": "{icon} {profile}",
+        "tooltip-format": "Power profile: {profile}\nClick to cycle power saver, balanced, and performance",
+        "format-icons": {
+            "default": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf0e7;</span>",
+            "power-saver": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf06c;</span>",
+            "balanced": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf24e;</span>",
+            "performance": "<span font_family='Font Awesome 7 Free Solid, Font Awesome 6 Free Solid'>&#xf0e7;</span>"
+        }
     },
 
     "clock": {

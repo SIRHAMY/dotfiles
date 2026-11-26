@@ -13,6 +13,7 @@ window#waybar {
 /* Reset all module padding */
 #workspaces,
 #mode,
+#power-profiles-daemon,
 #window,
 #clock,
 #cpu,
@@ -92,6 +93,18 @@ window#waybar {
 
 #custom-caffeine.off {
     color: #5e6570;
+}
+
+#power-profiles-daemon.power-saver {
+    color: #10b981;
+}
+
+#power-profiles-daemon.balanced {
+    color: #dedede;
+}
+
+#power-profiles-daemon.performance {
+    color: #d19a66;
 }
 
 #backlight {
