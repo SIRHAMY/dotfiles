@@ -1,0 +1,35 @@
+[global]
+    font = IBM Plex Sans 12
+    origin = top-right
+    offset = (8, 8)
+    width = 350
+    height = (0, 300)
+    notification_limit = 3
+    padding = 12
+    horizontal_padding = 12
+    frame_width = 2
+    frame_color = "#10b981"
+    corner_radius = 6
+    separator_height = 2
+    separator_color = frame
+    format = "<b>%s</b>\n%b"
+    icon_position = off
+    stack_duplicates = true
+
+[urgency_low]
+    background = "#0d0d0d"
+    foreground = "#dedede"
+    frame_color = "#5e6570"
+    timeout = 5
+
+[urgency_normal]
+    background = "#0d0d0d"
+    foreground = "#dedede"
+    frame_color = "#10b981"
+    timeout = 5
+
+[urgency_critical]
+    background = "#0d0d0d"
+    foreground = "#dedede"
+    frame_color = "#e06c75"
+    timeout = 0
